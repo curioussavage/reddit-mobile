@@ -58,8 +58,8 @@ function initialize(bindLinks) {
 
     _.forOwn(config, function(val, key) {
       if (bootstrap[key]) {
-        config[key] = bootstrap[key]
-      };
+        config[key] = bootstrap[key];
+      }
     });
 
     var app = new ClientReactApp(config);
