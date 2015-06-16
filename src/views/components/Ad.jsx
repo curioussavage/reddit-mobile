@@ -119,6 +119,7 @@ class Ad extends React.Component {
     props.hideSubredditLabel = true;
     props.hideWhen = true;
     props.hideDomain = true;
+    props.loaded = true;
 
     if (props.listing.disable_comments) {
       props.listing.permalink = undefined;

@@ -19,7 +19,7 @@ class Listing extends React.Component {
 
     this.state = {
       compact: props.compact,
-      loaded: false,
+      loaded: this.props.loaded || false,
       tallestHeight: 0,
       reported: false,
       hidden: false,
