@@ -6,6 +6,7 @@ import q from 'q';
 import querystring from 'querystring';
 import commentsMap from '../../lib/commentsMap';
 import constants from '../../constants';
+import _ from 'lodash';
 
 import Loading from '../components/Loading';
 import TrackingPixel from '../components/TrackingPixel';
@@ -70,7 +71,7 @@ class ListingPage extends React.Component {
     if (newText === listing.selftext) {
       return;
     }
-    
+
     var link = new models.Link(listing);
     var options = props.api.buildOptions(props.apiOptions);
 
@@ -86,7 +87,7 @@ class ListingPage extends React.Component {
         var newListing = res.data;
         listing.selftext = newListing.selftext;
         listing.expandContent = newListing.expandContent;
-        
+
         this.setState({
           editing: false,
           data: data,
@@ -95,6 +96,26 @@ class ListingPage extends React.Component {
     }.bind(this), function(err) {
       this.setState({linkEditError: err});
     }.bind(this))
+  }
+
+  onDelete(id) {
+    var props = this.props;
+    var options = props.api.buildOptions(props.apiOptions);
+
+    options = Object.assign(options, {
+      id: id,
+    });
+
+    // nothing returned for this endpoint
+    // so we assume success :/
+    props.api.links.delete(options).then(function(){
+      var data = props.app.state.data;
+      _.remove(data.data, {name: id});
+      props.app.setState({
+        data: data,
+      })
+      props.app.redirect('/r/' + props.subredditName);
+    })
   }
 
   toggleEdit() {
@@ -164,6 +185,7 @@ class ListingPage extends React.Component {
           editing={ editing }
           toggleEdit={ this.toggleEdit.bind(this) }
           editError={ this.state.linkEditError }
+          onDelete={this.onDelete.bind(this, listing.name)}
           />
       );
 
