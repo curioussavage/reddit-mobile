@@ -798,13 +798,16 @@ function routes(app) {
       return this.redirect(`/login?${querystring.stringify(query)}`);
     }
 
-
     Object.assign(this.props, {
       title: 'Compose New Message',
       metaDescription: 'user messages reddit.com',
       view: 'compose',
     });
 
+    const subredditOpts = buildAPIOptions(this);
+    subredditOpts.query.sort = 'mine/moderator';
+
+    setData(this, 'subreddit', 'subreddits', subredditOpts);
     this.body = makeBody(MessageComposePage);
   });
 

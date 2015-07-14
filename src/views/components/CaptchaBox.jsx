@@ -9,7 +9,7 @@ class CaptchaBox extends BaseComponent {
     answer: React.PropTypes.string.isRequired,
     cb: React.PropTypes.func.isRequired,
   };
-  
+
   constructor(props) {
     super(props);
 

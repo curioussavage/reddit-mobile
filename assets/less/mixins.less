@@ -63,6 +63,18 @@
           flex-wrap: @value;
 }
 
+.flex-column-layout {
+  .display-flex();
+  -webkit-box-orient: vertical;
+  .flex-direction(column);
+  .flex-wrap(nowrap);
+}
+
+.expanding-flex(@min) {
+  -webkit-box-flex: 1;
+  .flex(1, 1, @min);
+}
+
 .justify-content(@alignment) {
   -webkit-justify-content: @alignment;
           justify-content: @alignment;
@@ -79,4 +91,22 @@
 
 .bold {
   font-weight: bold;
+}
+
+.placeholder(@color) {
+  ::-webkit-input-placeholder {
+     color: @color;
+  }
+
+  :-moz-placeholder { /* Firefox 18- */
+     color: @color;
+  }
+
+  ::-moz-placeholder {  /* Firefox 19+ */
+     color: @color;
+  }
+
+  :-ms-input-placeholder {
+     color: @color;
+  }
 }

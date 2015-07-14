@@ -1,0 +1,118 @@
+@double-top-nav: (@top-nav-height * 2);
+
+.messageCompose {
+  .flex-column-layout;
+  margin: 0 auto;
+  max-width: 1000px;
+  height: calc(100% ~'-' @double-top-nav);
+  min-height: 200px;
+
+  &__select {
+    -webkit-appearance: none;
+    height: 32px;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 1.42857143;
+    color: #505453;
+    background-color: #fff;
+    background-image: none;
+    .themeify({
+      border: @theme-alt-border;
+      background-color: @theme-comment-body-color;
+      color: @theme-body-text-color;
+    });
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__footer-btn {
+    .btn-primary;
+    .pull-right;
+    display: inline-block;
+    margin: 5px;
+    font-weight: normal;
+    text-align: center;
+    vertical-align: middle;
+    touch-action: manipulation;
+    cursor: pointer;
+    background-image: none;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 1.42857143;
+    height: @top-nav-height;
+    width: 39%;
+    border-radius: none;
+  }
+
+  &__input {
+    .themeify({
+      border-bottom: @theme-border;
+      .placeholder(@theme-meta-text-color);
+    });
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    position: absolute;
+    height: 100%;
+    padding-left: 28px;
+
+    &:focus {
+      outline: none;
+    }
+
+    &.long {
+      padding-left: 60px;
+    }
+  }
+
+  &__text-wrap {
+    .expanding-flex(200px);
+    .flex-column-layout;
+  }
+
+  &__textarea {
+    .themeify({
+      border-bottom: @theme-border;
+      .placeholder(@theme-meta-text-color);
+    });
+    .expanding-flex(200px);
+    height: 100%;
+    padding: 6px 12px;
+    border: none;
+    resize: none;
+    font-size: 1.2em;
+    border-radius: 0;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__from-wrap {
+    padding-left: 10px;
+    padding-top: 15px;
+    display: inline-block;
+    width: 58%;
+    overflow: auto;
+  }
+
+  &__label {
+    position: absolute;
+    top: 11px;
+    left: 8px;
+    z-index: 1;
+    color: lighten(@gray, 20%);
+    font-weight: bold;
+  }
+
+  &__input-wrapper {
+    overflow: hidden;
+    position: relative;
+    height: 40px;
+  }
+}

@@ -147,7 +147,7 @@ class MessagePreview extends BaseComponent {
 
     if (this.state.showReply) {
       reply = (
-        <form action='/mesage' method='POST' onSubmit={ this._onReplySubmit }>
+        <form action='/message' method='POST' onSubmit={ this._onReplySubmit }>
           <div className='message-preivew-texarea-holder'>
             <textarea
               ref='replyText'
