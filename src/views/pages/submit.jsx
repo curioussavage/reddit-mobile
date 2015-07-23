@@ -50,6 +50,8 @@ class SubmitPage extends BasePage {
         fields: [],
       },
     };
+
+    this._handleApiErrors = this._handleApiErrors.bind(this);
   }
 
   componentDidMount () {
@@ -147,19 +149,15 @@ class SubmitPage extends BasePage {
 
         globals().app.redirect(url);
         globals().app.emit('post:submit', link.sr);
-      } else {
-        this._handleApiErrors(res);
-        globals().app.emit('post:error');
       }
-    }.bind(this)).catch(function(err) {
-      this._handleApiErrors(err[0])
-    }.bind(this));
+    }.bind(this)).catch(this._handleApiErrors);
   }
 
   _handleApiErrors (err) {
-    if (Array.isArray(err)) {
-      var type = err[0];
-      var message = err[1];
+    if (Array.isArray(err) && Array.isArray(err[0])) {
+      var type = err[0][0];
+      var message = err[0][1];
+      globals().app.emit('post:error', type);
 
       if (type === 'BAD_CAPTCHA') {
         this.setState({
@@ -180,6 +178,8 @@ class SubmitPage extends BasePage {
           }
         });
       }
+    } else {
+      globals().app.emit('post:error', err);
     }
   }
 
