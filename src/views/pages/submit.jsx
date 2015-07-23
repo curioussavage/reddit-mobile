@@ -140,9 +140,8 @@ class SubmitPage extends BasePage {
       model: link,
     });
 
-    var deferred = globals().api.links.post(options)
 
-    deferred.then(function(res) {
+    props.api.links.post(options).then(function(res) {
       if (res.data && res.data.url) {
         var url = res.data.url.replace(/^https?:\/\/(?:www\.)?reddit.com/, '');
 
@@ -152,8 +151,7 @@ class SubmitPage extends BasePage {
         this._handleApiErrors(res);
         globals().app.emit('post:error');
       }
-    }.bind(this),
-    function(err) {
+    }.bind(this)).catch(function(err) {
       this._handleApiErrors(err[0])
     }.bind(this));
   }
