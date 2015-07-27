@@ -167,11 +167,11 @@ class Comment extends BaseComponent {
         })
         globals().app.emit('comment:edit');
       }
-    }.bind(this), function(err) {
+    }.bind(this)).catch(function(err) {
       this.setState({
         editError: err,
-      }.bind(this))
-    })
+      })
+    }.bind(this));
   }
 
   preventPropagation (e) {
