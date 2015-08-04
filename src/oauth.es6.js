@@ -18,6 +18,15 @@ var oauthRoutes = function(app) {
     maxAge: 1000 * 60 * 60,
   };
 
+  function getPassthroughHeaders(ctx, app) {
+    return app.config.apiPassThroughHeaders.reduce(function(headers, key){
+      if (ctx.headers[key]) {
+        headers[key] = ctx.headers[key];
+      }
+      return headers;
+    }, {});
+  }
+
   if (app.getConfig('cookieDomain')) {
     cookieOptions.domain = app.getConfig('cookieDomain');
   }
@@ -95,7 +104,9 @@ var oauthRoutes = function(app) {
         'Authorization': basicAuth,
       };
 
-      Object.assign(headers, app.config.apiHeaders || {});
+      let passThrough = getPassthroughHeaders(ctx, app);
+
+      Object.assign(headers, app.config.apiHeaders || {}, passThrough);
 
       superagent
         .post(endpoint)
@@ -133,7 +144,9 @@ var oauthRoutes = function(app) {
         'accept-language': ctx.headers['accept-language'],
       };
 
-      Object.assign(headers, app.config.apiHeaders || {});
+      let passThrough = getPassthroughHeaders(ctx, app);
+
+      Object.assign(headers, app.config.apiHeaders || {}, passThrough);
 
       superagent
         .get(endpoint)
@@ -171,7 +184,7 @@ var oauthRoutes = function(app) {
             state: modhash,
             duration: 'permanent',
             authorize: 'yes',
-          }
+          };
 
           headers['x-modhash'] = modhash;
 
@@ -213,7 +226,9 @@ var oauthRoutes = function(app) {
                 'Authorization': basicAuth,
               };
 
-              Object.assign(headers, app.config.apiHeaders || {});
+              let passThrough = getPassthroughHeaders(ctx, app);
+
+              Object.assign(headers, app.config.apiHeaders || {}, passThrough);
 
               superagent
                 .post(endpoint)
@@ -357,7 +372,9 @@ var oauthRoutes = function(app) {
         'Authorization': basicAuth,
       };
 
-      Object.assign(headers, app.config.apiHeaders || {});
+      let passThrough = getPassthroughHeaders(ctx, app);
+
+      Object.assign(headers, app.config.apiHeaders || {}, passThrough);
 
       superagent
         .post(endpoint)
@@ -433,9 +450,11 @@ var oauthRoutes = function(app) {
     }
 
     var p = new Promise(function(resolve, reject) {
+      let passThrough = getPassthroughHeaders(ctx, app);
+
       var headers = Object.assign({
         'User-Agent': ctx.headers['user-agent'],
-      }, app.config.apiHeaders || {});
+      }, app.config.apiHeaders || {}, passThrough);
 
       superagent
         .post(endpoint)
