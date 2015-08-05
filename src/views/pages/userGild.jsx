@@ -58,6 +58,8 @@ class UserGildPage extends BaseComponent {
         <TrackingPixel
           url={ this.state.data.meta.tracking }
           user={ this.props.user }
+          loid={ props.loid }
+          loidcreated={ props.loidcreated }
         />);
     }
 
