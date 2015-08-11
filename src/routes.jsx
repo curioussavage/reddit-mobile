@@ -186,7 +186,7 @@ function routes(app) {
         });
 
         resolve(data);
-      }, function(error) {
+      }).catch(function(error) {
         reject(error);
       });
     });
