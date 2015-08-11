@@ -155,7 +155,7 @@ function routes(app) {
           try {
             app.api.preferences.get(options).then(function(prefs) {
               resolve(prefs.data);
-            }, function(error) {
+            }).catch(function(error) {
               reject(error);
             });
           } catch (e) {
