@@ -197,35 +197,34 @@ class ListingContent extends BaseComponent {
     var style = {};
     var isNSFW = ListingContent.isNSFW(props.listing);
     var expanded = this._isExpanded();
-    var loaded = props.loaded;
-    if (loaded) {
-      if (onClick) {
-        var playIconNode = <span className='icon-play-circled'>{' '}</span>;
-      }
-      if (isNSFW && !expanded) {
-        if (compact) {
-          var nsfwNode = (
-            <div className='ListingContent-nsfw'>
-              <p className='ListingContent-nsfw-p'>NSFW</p>
-            </div>
-          );
-        } else {
-          nsfwNode = (
-            <div className='ListingContent-nsfw'>
-              <p className='ListingContent-nsfw-p'>This post is marked as NSFW</p>
-              <p className='ListingContent-nsfw-p outlined'>Show post?</p>
-            </div>
-          );
-        }
-      }
-      if (src) {
-        var a = document.createElement('a');
-        a.href = src;
-        a.protocol = location.protocol;
 
-        style.backgroundImage = 'url(' + a.href + ')';
+    if (onClick) {
+      var playIconNode = <span className='icon-play-circled'>{' '}</span>;
+    }
+    if (isNSFW && !expanded) {
+      if (compact) {
+        var nsfwNode = (
+          <div className='ListingContent-nsfw'>
+            <p className='ListingContent-nsfw-p'>NSFW</p>
+          </div>
+        );
+      } else {
+        nsfwNode = (
+          <div className='ListingContent-nsfw'>
+            <p className='ListingContent-nsfw-p'>This post is marked as NSFW</p>
+            <p className='ListingContent-nsfw-p outlined'>Show post?</p>
+          </div>
+        );
       }
     }
+    if (src) {
+      var a = document.createElement('a');
+      a.href = src;
+      a.protocol = location.protocol;
+
+      style.backgroundImage = 'url(' + a.href + ')';
+    }
+
     var aspectRatio = this._aspectRatio();
     if (props.single && aspectRatio) {
       style.height = 1 / aspectRatio * props.width  + 'px';
@@ -250,7 +249,7 @@ class ListingContent extends BaseComponent {
     }
 
     return (
-      <a  className={'ListingContent-image ' + (props.isThumbnail ? '' : _aspectRatioClass(aspectRatio)) + (!src && loaded ? ' placeholder' : '')}
+      <a  className={'ListingContent-image ' + (props.isThumbnail ? '' : _aspectRatioClass(aspectRatio)) + (!src ? ' placeholder' : '')}
           href={ href }
           onClick={ onClick }
           data-no-route={ noRoute }
@@ -326,7 +325,7 @@ class ListingContent extends BaseComponent {
     var props = this.props;
     if (this._isCompact()) {
       return (
-        <a className={'ListingContent-image' + (props.loaded ? ' placeholder' : '')} href={ mobilify(props.listing.url) }/>
+        <a className={'ListingContent-image'} href={ mobilify(props.listing.url) }/>
       );
     }
   }
@@ -506,7 +505,6 @@ ListingContent.propTypes = {
   expandedCompact: React.PropTypes.bool,
   isThumbnail: React.PropTypes.bool,
   listing: propTypes.listing.isRequired,
-  loaded: React.PropTypes.bool.isRequired,
   saveUpdatedText: React.PropTypes.func,
   single: React.PropTypes.bool,
   tallestHeight: React.PropTypes.number.isRequired,

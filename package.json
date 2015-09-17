@@ -28,6 +28,7 @@
     "lodash": "3.10.1",
     "moment": "2.10.6",
     "react": "0.13.3",
+    "react-variable-height-infinite-scroller": "^2.0.7",
     "reddit-text-js": "0.5.5",
     "scmp": "1.0.0",
     "simple-oauth2": "0.2.1",

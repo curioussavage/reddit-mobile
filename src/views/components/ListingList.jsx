@@ -7,6 +7,7 @@ import Ad from '../components/Ad';
 import BaseComponent from './BaseComponent';
 import CommentPreview from '../components/CommentPreview';
 import Listing from '../components/Listing';
+import InfiniteScroller from 'react-variable-height-infinite-scroller';
 
 const _AD_LOCATION = 11;
 
@@ -18,24 +19,14 @@ class ListingList extends BaseComponent {
       adLocation: Math.min(_AD_LOCATION, props.listings.length),
       compact: this.props.compact,
     };
-
-    this._lazyLoad = this._lazyLoad.bind(this);
-    this._resize = this._resize.bind(this);
   }
 
   componentDidMount() {
-    this.props.app.on(constants.RESIZE, this._resize);
-    this._addListeners();
-    this._resize();
-
     this._onCompactToggle = this._onCompactToggle.bind(this);
     this.props.app.on(constants.COMPACT_TOGGLE, this._onCompactToggle);
   }
 
   componentWillUnmount() {
-    this._removeListeners();
-    this.props.app.off(constants.RESIZE, this._resize);
-
     this.props.app.off(constants.COMPACT_TOGGLE, this._onCompactToggle);
   }
 
@@ -61,62 +52,6 @@ class ListingList extends BaseComponent {
     return this._hasAd() && index === this.state.adLocation;
   }
 
-  _lazyLoad() {
-    var listings = this.props.listings;
-    var loadedDistance = this._getLoadedDistance();
-    var adIsMidListing = listings.length > this.state.adLocation;
-
-    for (var i = 0; i < listings.length; i++) {
-      var listing = this.refs['listing' + i];
-
-      // Check ad first since it'll be before the `i`th listing.
-      if (this._isIndexOfAd(i) && !this._checkAdPos()) {
-        return;
-      }
-
-      if (listing.checkPos && !listing.checkPos(loadedDistance)) {
-        return;
-      }
-    }
-
-    // Ad is after all the listings
-    if (this._hasAd() && !this._checkAdPos()) {
-      return;
-    }
-
-    this._removeListeners();
-  }
-
-  _addListeners() {
-    if (!this._hasListeners) {
-      this._hasListeners = true;
-      this.props.app.on(constants.SCROLL, this._lazyLoad);
-      this.props.app.on(constants.RESIZE, this._lazyLoad);
-      this._lazyLoad();
-    }
-  }
-
-  _removeListeners() {
-    if (this._hasListeners) {
-      this.props.app.off(constants.SCROLL, this._lazyLoad);
-      this.props.app.off(constants.RESIZE, this._lazyLoad);
-      this._hasListeners = false;
-    }
-  }
-
-  _resize() {
-    var width = this.refs.root.getDOMNode().offsetWidth;
-    for (var i = 0; i < this.props.listings.length; i++) {
-      var ref = this.refs['listing' + i];
-
-      ref.resize && ref.resize(width);
-    }
-
-    if (this.refs.ad) {
-      this.refs.ad.resize(width);
-    }
-  }
-
   buildAd() {
     var srnames = uniq(this.props.listings.map(function(l) {
       return l.subreddit;
@@ -140,55 +75,69 @@ class ListingList extends BaseComponent {
     var page = props.firstPage || 0;
     var length = props.listings.length;
     var compact = this.state.compact;
-    var listings = (
-      props.listings.map(function(listing, i) {
 
-        var index = (page * 25) + i;
-        if (listing._type === 'Comment') {
-          return (
-            <CommentPreview
-              comment={listing}
-              key={'page-comment-' + index}
-              page={page}
-              ref={'listing' + i}
-            />
-          );
-        } else {
-          if (props.showHidden || !listing.hidden) {
-            return (
-              <Listing
-                index={index}
-                key={'page-listing-' + index}
-                listing={listing}
-                ref={'listing' + i}
-                z={length - i}
-                {...props}
-                compact={ compact }
-              />
-            );
-          }
-        }
-      })
-    );
-
+    /*
     // If ads are enabled, splice an ad into the listings.
     if (props.showAds && listings.length) {
       listings.splice(this.state.adLocation, 0, this.buildAd());
     }
+    */
 
-    return (
-      <div ref='root'>{listings}</div>
-    );
+    if (global.innerHeight) {
+      // rough, but close enough.
+      var height = global.innerHeight;
+
+      return (
+        <InfiniteScroller
+          averageElementHeight={this.state.compact ? 100 : 300}
+          containerHeight={height}
+          renderRow={this.renderRow.bind(this)}
+          totalNumberOfRows={this.props.listings.length}
+        />
+      );
+    } else {
+      var els = this.props.listings.map(function(l, i) {
+        return this.renderRow(i);
+      }.bind(this));
+
+      return (
+        <div>{els}</div>
+      );
+    }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.compact !== this.state.compact) {
-      this._resize();
-      this._lazyLoad();
+  renderRow (rowNumber) {
+    var listingEl;
+    var listing = this.props.listings[rowNumber];
+
+    var index = ((this.props.firstPage || 0) * 25) + rowNumber;
+
+    if (listing._type === 'Comment') {
+      listingEl = (
+        <CommentPreview
+          comment={listing}
+          key={'page-comment-' + index}
+          page={page}
+          ref={'listing' + rowNumber}
+        />
+      );
+    } else {
+      if (this.props.showHidden || !listing.hidden) {
+        listingEl = (
+          <Listing
+            index={index}
+            key={'page-listing-' + index}
+            listing={listing}
+            ref={'listing' + rowNumber}
+            z={this.props.listings.length - rowNumber}
+            {...this.props}
+            compact={ this.state.compact }
+          />
+        );
+      }
     }
-    if (prevProps.listings !== this.props.listings) {
-      this._addListeners();
-    }
+
+    return listingEl;
   }
 
   componentWillReceiveProps(nextProps) {
