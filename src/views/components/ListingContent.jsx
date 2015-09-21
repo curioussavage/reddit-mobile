@@ -1,4 +1,5 @@
 import React from 'react';
+import url from 'url';
 import MyMath from '../../lib/danehansen/utils/MyMath';
 import mobilify from '../../lib/mobilify';
 import propTypes from '../../propTypes';
@@ -218,11 +219,13 @@ class ListingContent extends BaseComponent {
       }
     }
     if (src) {
-      var a = document.createElement('a');
-      a.href = src;
-      a.protocol = location.protocol;
+      var imgUrl = url.parse(src);
 
-      style.backgroundImage = 'url(' + a.href + ')';
+      if (this.props.config.HTTPS) {
+        imgUrl.protocol = 'https:';
+      }
+
+      style.backgroundImage = 'url(' + url.format(imgUrl) + ')';
     }
 
     var aspectRatio = this._aspectRatio();
