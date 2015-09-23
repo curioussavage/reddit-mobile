@@ -7,6 +7,10 @@
 .Listing-container {
   z-index: 1;
   position: relative;
+  max-height: calc(~'100% - 75px');
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  
 
   &.compact {
     padding: 0;
