@@ -2,6 +2,7 @@ import React from 'react';
 import MyMath from '../../lib/danehansen/utils/MyMath';
 import mobilify from '../../lib/mobilify';
 import propTypes from '../../propTypes';
+import IScroll from 'iscroll';
 
 import BaseComponent from './BaseComponent';
 
@@ -242,7 +243,9 @@ class ListingContent extends BaseComponent {
           href={ href }
           onClick={ onClick }
           data-no-route={ noRoute }>
-          <img className='ListingContent-image-img' src={ src }/>
+          <div ref="scroller">
+            <img className='ListingContent-image-img' src={ src }/>
+          </div>
           { playIconNode }
           { nsfwNode }
         </a>
@@ -250,15 +253,25 @@ class ListingContent extends BaseComponent {
     }
 
     return (
-      <a  className={'ListingContent-image ' + (props.isThumbnail ? '' : _aspectRatioClass(aspectRatio)) + (!src && loaded ? ' placeholder' : '')}
-          href={ href }
-          onClick={ onClick }
-          data-no-route={ noRoute }
-          style={ style }>
-          { playIconNode }
-          { nsfwNode }
-      </a>
+      <div ref="scroller">
+        <a  className={'ListingContent-image ' + (props.isThumbnail ? '' : _aspectRatioClass(aspectRatio)) + (!src && loaded ? ' placeholder' : '')}
+            href={ href }
+            onClick={ onClick }
+            data-no-route={ noRoute }
+            style={ style }>
+            { playIconNode }
+            { nsfwNode }
+        </a>
+      </div>
     );
+  }
+
+  componentDidMount () {
+    if (this.props.expanded || this.props.compact) {
+      var el = React.findDOMNode(this.refs.scroller) 
+      var scroller = new IScroll(el);      
+    }
+
   }
 
   _renderVideo(src, poster) {

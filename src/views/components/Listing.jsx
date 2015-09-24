@@ -28,7 +28,7 @@ class Listing extends BaseComponent {
     this.state = {
       compact: compact,
       expanded: false,
-      loaded: false,
+      loaded: true,
       tallestHeight: 0,
       reported: props.listing.reported,
       hidden: props.listing.hidden,
