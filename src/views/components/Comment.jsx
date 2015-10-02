@@ -256,8 +256,8 @@ class Comment extends BaseComponent {
       var children = (
         <div className='comment-children comment-content'>
           {
-            comment.replies.map((c, i) => {
-              if (c) {
+            comment.replies.map((c, i, arr) => {
+              if (c && c.bodyHtml !== undefined) {
                 var key = 'page-comment-' + c.name + '-' + i;
 
                 return (
@@ -268,6 +268,13 @@ class Comment extends BaseComponent {
                     nestingLevel={nestingLevel + 1}
                     op={op}
                   />
+                ) 
+              } else {
+                let numChildren = c.children.length;
+                let word = numChildren > 1 ? 'replies' : 'reply';
+                let permalink = permalinkBase + c.parent_id.substring(3) + '?context=0'
+                return (
+                  <a href={ permalink } >View more comments ({numChildren} {word})</a>
                 );
               }
             })
@@ -331,7 +338,7 @@ class Comment extends BaseComponent {
                 <li className={`comment-title-collapse-container twirly before ${(collapsed ? '' : 'opened')}`}>
                 </li>
                 <li className="comment-title-username">
-                  <span className={`opClass ${distinguishedClass}`}>
+                  <span className={`${opClass} ${distinguishedClass}`}>
                     { comment.author }
                   </span>
 

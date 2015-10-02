@@ -136,7 +136,7 @@ class ListingPage extends BasePage {
     let commentsList;
     if (comments) {
       commentsList = comments.map((comment, i) => {
-        if (comment) {
+        if (comment && comment.bodyHtml !== undefined) {
           comment = commentsMap(comment, null, author, 4, 0, 0, false, savedCommentKeys);
           return (
             <Comment
@@ -154,6 +154,12 @@ class ListingPage extends BasePage {
               token={ token }
               apiOptions={ apiOptions }
             />
+          );
+        } else {
+          let numChildren = comment.children.length;
+          let word = numChildren > 1 ? 'replies' : 'reply';
+          return (
+            <a href='javascript:void(0);'>load more comments ({numChildren} {word})</a>
           );
         }
       })
