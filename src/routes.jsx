@@ -114,6 +114,7 @@ function routes(app) {
         dataCache: ctx.dataCache,
         ctx: filterContextProps(ctx),
         compact: ctx.compact,
+        showOver18Interstitial: ctx.showOver18Interstitial,
         experiments: ctx.experiments,
         user: ctx.user,
         token: ctx.token,
@@ -222,7 +223,7 @@ function routes(app) {
         id: props.subredditName.toLowerCase(),
       });
 
-      setData(this, 'subreddit', 'subreddits', subredditOpts);
+      setData(this, 'subreddits', 'subreddits', subredditOpts);
     }
 
     var key = 'index-' + (this.props.title || '') + querystring.stringify(this.query);
