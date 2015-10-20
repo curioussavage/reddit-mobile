@@ -13,7 +13,6 @@ class Ad extends BaseComponent {
 
     this.state = {
       loaded: false,
-      unavailable: false,
     };
 
     this._checkImpression = this._checkImpression.bind(this);
@@ -22,11 +21,11 @@ class Ad extends BaseComponent {
   }
 
   checkPos() {
-    if (this.state.unavailable) {
+    if (!this.state.loaded) {
       return true;
     }
 
-    var listing = this.refs.listing;
+    let listing = this._listing;
 
     if (!listing) {
       return true;
@@ -35,36 +34,33 @@ class Ad extends BaseComponent {
     return listing.checkPos.apply(listing, arguments);
   }
 
-  getAd() {
-    var srnames = this.props.srnames;
-    const specificAd = this.props.ctx.query.ad;
-
-    if (specificAd) {
-      return new Promise(function (resolve, reject) {
-        const options = Object.assign({}, this.props.apiOptions, { id: specificAd });
-
-        this.props.app.api.links.get(options)
-          .then((link) => {
-            resolve(new models.Link(link).toJSON());
-          }, (err) => {
-            reject(err);
-          });
-      }.bind(this));
+  resize() {
+    if (!this.state.loaded) {
+      return;
     }
 
+    let listing = this._listing;
+
+    if (!listing) {
+      return;
+    }
+
+    listing.resize.apply(listing, arguments);
+  }
+
+  async getAd() {
+    let { srnames, subredditName, app, token, loid } = this.props;
+    let { authAPIOrigin, nonAuthAPIOrigin, adsPath } = app.config;
     // If we're not on a sub/multi, we're on the front page, so get front page
     // ads
-    if (!this.props.subredditTitle) {
+    if (!subredditName) {
       srnames = ' reddit.com';
     }
 
-    var app = this.props.app;
-    var loggedIn = !!this.props.token;
-    var origin = (loggedIn ?
-      app.config.authAPIOrigin :
-        app.config.nonAuthAPIOrigin)
-    var headers = {};
-    var postData = {
+    let loggedIn = !!token;
+    let origin = loggedIn ? authAPIOrigin : nonAuthAPIOrigin;
+    let headers = {};
+    let postData = {
       srnames: srnames,
       is_mobile_web: true,
       raw_json: '1',
@@ -72,45 +68,38 @@ class Ad extends BaseComponent {
 
     // If user is not logged in, send the loid in the promo request
     if (loggedIn) {
-      headers.authorization = 'bearer ' + this.props.token;
+      headers.authorization = 'bearer ' + token;
     } else {
-      postData.loid = this.props.loid;
+      postData.loid = loid;
     }
 
-    return new Promise((resolve, reject) => {
-      superagent.post(origin + this.props.config.adsPath)
+    try {
+      let res = await superagent.post(origin + adsPath)
         .set(headers)
         .type('form')
         .send(postData)
         .timeout(constants.DEFAULT_API_TIMEOUT)
-        .end(function(err, res) {
-          if (err) {
-            return reject(err);
-          }
 
-          if (res && res.status === 200 && res.body) {
-            var link = res.body.data;
-            link.url = link.href_url;
+      if (res && res.status === 200 && res.body) {
+        var link = res.body.data;
+        link.url = link.href_url;
 
-            return resolve(new models.Link(link).toJSON());
-          } else {
-            return reject(res);
-          }
+        this.setState({
+          loaded: true,
+          ad: new models.Link(link).toJSON(),
         });
-      });
+      } else {
+        throw [['Unknown error', 'There was a problem']];
+      }
+    } catch (e) {
+      if (this.props.config.debug) {
+        console.log(e);
+      }
+    }
   }
 
   componentDidMount() {
-    this.getAd().then((ad) => {
-      return this.setState({
-        loaded: true,
-        ad: new models.Link(ad).toJSON(),
-      });
-    }, () => {
-      this.setState({
-        unavailable: true,
-      });
-    });
+    this.getAd();
 
     this.props.app.on(constants.SCROLL, this._checkImpression);
     this.props.app.on(constants.RESIZE, this._checkImpression);
@@ -147,7 +136,7 @@ class Ad extends BaseComponent {
       const rect = node.getBoundingClientRect();
       const top = rect.top;
       const height = rect.height;
-      const bottom = top + rect.height;
+      const bottom = top + height;
       const middle = (top + bottom) / 2;
       const middleIsAboveBottom = middle < winHeight;
       const middleIsBelowTop = bottom > constants.TOP_NAV_HEIGHT + height / 2;
@@ -166,29 +155,34 @@ class Ad extends BaseComponent {
   }
 
   render() {
-    if (!this.state.loaded || this.state.unavailable) {
+    let props = this.props;
+    let { loaded, ad } = this.state;
+    if (!loaded) {
       return null;
     }
 
-    var props = this.props;
-    var listing = Object.assign({}, this.state.ad, { compact: props.compact });
-
     return (
       <Listing
-        ref='listing'
+        ref={(c) => {
+          if (!this._listing && c) {
+            this._listing = c;
+          }
+        }}
         {...props}
-        hideDomain={true}
-        hideSubredditLabel={true}
-        hideWhen={true}
-        listing={listing} />
+        hideDomain={ true }
+        hideSubredditLabel={ true }
+        hideWhen={ true }
+        listing={ ad } />
     );
   }
 };
 
+let { func, bool, string } = React.PropTypes;
+
 Ad.propTypes = {
-  afterLoad: React.PropTypes.func.isRequired,
-  compact: React.PropTypes.bool.isRequired,
-  token: React.PropTypes.string,
+  afterLoad: func.isRequired,
+  compact: bool.isRequired,
+  token: string,
 };
 
 export default Ad;

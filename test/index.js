@@ -6,6 +6,16 @@ require('babel/register')({
   stage: 0
 });
 
+var sinon = require('sinon');
+
+beforeEach(function() {
+  this.sinon = sinon.sandbox.create();
+});
+
+afterEach(function(){
+  this.sinon.restore();
+});
+
 // lib
 require('./lib/titleCase');
 require('./lib/formatDifference');
@@ -16,6 +26,7 @@ global.document = {};
 
 // components
 require('./views/components/Modal');
+require('./views/components/Ad');
 
 
 //Layouts
