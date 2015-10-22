@@ -9,9 +9,7 @@ require('babel/register')({
 
 var glob = require('glob');
 var gulp = require('gulp');
-var gutil = require('gulp-util');
 var sequence = require('gulp-sequence').use(gulp);
-var util = require('util');
 
 
 // Check node version
@@ -31,10 +29,10 @@ gulp.task('load-tasks', function() {
   glob.sync('./buildTasks/*.js').forEach(function(file) {
     try {
       var task = require(file);
-      gutil.log(util.format('loading task: %s', file));
+      console.log(`loading task: ${file}`);
       task(gulp, options);
     } catch (e) {
-      gutil.log(util.format('unable to require task: %s\n\n%s', file, e));
+      console.log(`unable to require task: ${file} \n\n ${e}`);
     }
   });
 });
