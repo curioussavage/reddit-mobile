@@ -1,7 +1,6 @@
 'use strict';
 
 var combiner = require('stream-combiner2');
-var gutil = require('gulp-util');
 var uglify = require('gulp-uglify');
 var streamify = require('gulp-streamify');
 var rev = require('gulp-rev');
@@ -23,7 +22,7 @@ var notify = require('./utils/notify');
 
 module.exports = function buildJS(gulp, options) {
   gulp.task('js', function(cb) {
-    var entryFile = './assets/js/client.es6.js';
+    var entryFile = options.js.entryFile;
     var buildjs = path.join(options.paths.build, options.paths.js);
 
     var shims = streamqueue({ objectMode: true });
@@ -62,7 +61,7 @@ module.exports = function buildJS(gulp, options) {
 
     bundler
       .transform(babelify.configure({
-        ignore: /.+node_modules\/(moment|q|react|reddit-text-js|superagent|lodash)\/.+/i,
+        ignore: /.+node_modules\/(moment|react|reddit-text-js|superagent|lodash)\/.+/i,
         extensions: ['.js', '.es6.js', '.jsx' ],
         sourceMap: options.debug,
         stage: 0,
@@ -91,41 +90,61 @@ module.exports = function buildJS(gulp, options) {
       var stream = bundler.bundle();
 
       var error = false;
-      var combined = combiner.obj([
-        stream,
-        //exorcist(buildjs + '/client.js.map'),
-        source(entryFile),
-        rename('client.js'),
-        gulp.dest(buildjs),
-        gulpIf(!options.debug, streamify(uglify())),
-        rename('client.min.js'),
-        gulp.dest(buildjs),
-        buffer(),
-        rev(),
-        gulp.dest(buildjs),
-        rev.manifest(),
-        rename('client-manifest.json'),
-        livereload(),
-        gulp.dest(buildjs)
-          .on('finish', function() {
-            if (!error) {
-              notify({
-                message: 'Finished js',
-              });
-            }
 
-            if (cb) { cb(); };
-            cb = null;
-            bundling = false;
-            error = false;
-          }),
-      ]);
+      if (options.debug) {
+        var combined = combiner.obj([
+          stream,
+          source(entryFile),
+          rename('client.js'),
+          livereload(),
+          gulp.dest(buildjs)
+            .on('finish', function() {
+              if (!error) {
+                
+                notify({
+                  message: 'Finished js',
+                });
+              }
+
+              if (cb) { cb(); };
+              cb = null;
+              bundling = false;
+              error = false;
+            }),
+          ]);
+      } else {
+        var combined = combiner.obj([
+          stream,
+          //exorcist(buildjs + '/client.js.map'),
+          source(entryFile),
+          streamify(uglify()),
+          rename('client.min.js'),
+          buffer(),
+          rev(),
+          gulp.dest(buildjs),
+          rev.manifest('client-manifest.json'),
+          gulp.dest(buildjs)
+            .on('finish', function() {
+              if (!error) {
+                notify({
+                  message: 'Finished js',
+                });
+              }
+
+              if (cb) { cb(); };
+              cb = null;
+              bundling = false;
+              error = false;
+            }),
+        ]);
+      }      
 
       // only catch errors in debug mode,
       // otherwise prod builds won't fail
       //if (options.debug) {
         combined
           .on('error', function(e) {
+            console.log(e)
             error = true;
             notify(e);
           });
