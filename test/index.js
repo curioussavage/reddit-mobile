@@ -1,6 +1,11 @@
-const mocha = require('mocha');
 
-mocha.test();
+require('babel/register')({
+  ignore: false,
+  only: /.+(?:(?:\.es6\.js)|(?:.jsx))$/,
+  extensions: ['.js', '.es6.js', '.jsx' ],
+  sourceMap: true,
+  stage: 0,
+});
 
 // lib
 require('./lib/titleCase');
@@ -14,7 +19,7 @@ global.document = {};
 require('./views/components/Modal');
 
 
-//Layouts
+// Layouts
 require('./views/layouts/BodyLayout');
 
 // pages

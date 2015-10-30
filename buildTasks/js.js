@@ -22,7 +22,7 @@ var notify = require('./utils/notify');
 
 module.exports = function buildJS(gulp, options) {
   gulp.task('js', function(cb) {
-    var entryFile = options.js.entryFile;
+    var entryFile = options.paths.entryFile;
     var buildjs = path.join(options.paths.build, options.paths.js);
 
     var shims = streamqueue({ objectMode: true });
@@ -144,7 +144,6 @@ module.exports = function buildJS(gulp, options) {
       //if (options.debug) {
         combined
           .on('error', function(e) {
-            console.log(e)
             error = true;
             notify(e);
           });

@@ -15,18 +15,7 @@ var sequence = require('gulp-sequence').use(gulp);
 // Check node version
 require('./version');
 
-var options = {
-  debug: true,
-  watch: false,
-  paths: {
-    build: './build',
-    js: 'js',
-    css: 'css',
-  },
-  js: {
-    entryFile: './assets/js/client.es6.js',
-  }
-};
+var options = require('./gulp.config')();
 
 gulp.task('load-tasks', () => {
   glob.sync('./buildTasks/*.js').forEach((file) => {
@@ -48,24 +37,24 @@ gulp.task('set-prod', () => {
   options.debug = false;
 });
 
-gulp.task('set-tests', () => {
-  options.paths.build = './test/build';
-  options.js.entryFile = './test/index.js';
-})
+gulp.task('set-test', () => {
+  require('./buildTasks/tests/toggleServer.js')(gulp, options);
+  require('./buildTasks/tests/runTests.js')(gulp, options);
+});
 
 gulp.task('load-prod', sequence('set-prod', 'load-tasks'));
 gulp.task('load-dev', sequence('load-tasks'));
 gulp.task('load-watch', sequence('set-watch', 'load-tasks', 'watcher'));
 gulp.task('build', sequence('clean', 'assets', ['js', 'less']));
 gulp.task('load-test', sequence('set-tests', 'load-tasks'));
-gulp.task('build-tests', sequence('js', 'test-html'));
+gulp.task('start-server', sequence(''));
 
 
 gulp.task('default', sequence('load-prod', 'build'));
 gulp.task('dev', sequence('load-dev', 'build'));
 gulp.task('watch', sequence('load-watch', 'build'));
 gulp.task('icon-fonts', sequence('set-prod', 'load-tasks', 'icons'));
-gulp.task('test', sequence('load-test', 'build-tests'));
+gulp.task('test-browser', sequence('set-test', 'dev', 'toggle-server', 'run-tests', 'toggle-server'));
 
 // gulp seems to hang after finishing in some environments
 gulp.on('stop', function() {
