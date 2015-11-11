@@ -101,6 +101,12 @@ class SideNav extends BaseComponent {
                 </a>
               </li>
               <li className='SideNav-li'>
+                <a className='MobileButton SideNav-button' href='prefs'>
+                  { settingsIcon }
+                  <span className='SideNav-text'>Preferences</span>
+                </a>
+              </li>
+              <li className='SideNav-li'>
                 <a className='MobileButton SideNav-button' href={ `/u/${user.name}/saved` }>
                   { saveIcon }
                   <span className='SideNav-text'>Saved</span>

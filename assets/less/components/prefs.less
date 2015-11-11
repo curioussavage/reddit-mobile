@@ -1,0 +1,39 @@
+
+.prefs-select-wrap, .prefs-number-wrap {
+  padding-left: 10px;
+}
+
+.prefs-form-wrap {
+  padding-bottom: 10px;
+}
+
+// toggle component
+
+.prefs-toggle-circle {
+  .shadow;
+  display: inline-block;
+  border-radius: 30px;
+  height: 25px;
+  width: 25px;
+  background-color: white;
+  position: absolute;
+  top: -4px;
+  left: 0;
+}
+
+.prefs-toggle-bar {
+  display: inline-block;
+  border-radius: 30px;
+  height: 15px;
+  width: 45px;
+  background-color: lightgray;
+  position: relative;
+  vertical-align: middle;
+  float: right;
+}
+
+.prefs-toggle-bar.selected > .prefs-toggle-circle {
+  right: 0;
+  left: 42%;
+  background-color: @blue;
+}

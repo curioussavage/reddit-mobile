@@ -26,8 +26,9 @@ import RegisterPage from './views/pages/register';
 import MessagesPage from './views/pages/messages';
 import MessageComposePage from './views/pages/messageCompose';
 import SubmitPage from './views/pages/submit';
-import constants from './constants';
+import PrefsPage from './views/pages/prefs';
 
+import constants from './constants';
 import defaultConfig from './config';
 
 const config = defaultConfig();
@@ -726,6 +727,18 @@ function routes(app) {
     this.props.data.set('messages', app.api.messages.get(listingOpts));
 
     this.body = makeBody(MessagesPage);
+  });
+
+  router.get('preferences', '/prefs', function *() {
+    if (!this.token) {
+      let query = {
+        originalUrl: this.url,
+      };
+
+      return this.redirect('/login?' + querystring.stringify(query));
+    }
+
+    this.body = makeBody(PrefsPage);
   });
 
   router.get('404', '*', function *() {
