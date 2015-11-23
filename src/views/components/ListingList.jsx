@@ -151,6 +151,7 @@ class ListingList extends BaseComponent {
                 listing={listing}
                 ref={'listing' + i}
                 z={length - i}
+                subredditIsNSFW={ props.subredditIsNSFW }
                 {...props}
                 compact={ compact }
               />

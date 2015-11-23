@@ -129,6 +129,7 @@ class IndexPage extends BasePage {
       showAds = false;
     }
 
+    let subredditIsNSFW = data.subreddit ? data.subreddit.over18 : false;
 
     return (
       <div>
@@ -152,6 +153,7 @@ class IndexPage extends BasePage {
             page={ page }
             hideSubredditLabel={ hideSubredditLabel }
             subredditTitle={ subreddit }
+            subredditIsNSFW={ subredditIsNSFW }
             winWidth={ this.props.ctx.winWidth }
           />
           <div className='pageNav IndexPage-buttons-holder-holder'>
