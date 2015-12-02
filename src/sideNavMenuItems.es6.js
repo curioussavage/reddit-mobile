@@ -1,4 +1,4 @@
-export default [
+export const aboutItems = [
   { url: '/blog',               title: 'blog' },
   { url: '/about',              title: 'about' },
   { url: '/about/team',         title: 'team' },
@@ -12,4 +12,11 @@ export default [
   { url: '/help/useragreement', title: 'user agreement' },
   { url: '/help/privacypolicy', title: 'privacy policy' },
   { url: '/contact',            title: 'contact us' },
+];
+
+export const userItems = [
+  {url: '/',       title: 'My Profile', icon: 'snooIcon'},
+  {url: '/saved',  title: 'Saved',      icon: 'saveIcon'},
+  {url: '/hidden', title: 'Hidden',     icon: 'settingsIcon'},
+  {url: '/logout', title: 'Log out',    icon: 'snooIcon', external: true},
 ];
