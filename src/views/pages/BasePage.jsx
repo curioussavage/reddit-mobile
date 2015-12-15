@@ -1,5 +1,4 @@
 import React from 'react';
-import isEqual from 'lodash/lang/isEqual';
 
 import BaseComponent from '../components/BaseComponent';
 import TrackingPixel from '../../lib/TrackingPixel';
@@ -45,8 +44,9 @@ class BasePage extends BaseComponent {
 
   watch (property) {
     this.props.data.get(property).then((p) => {
+      let data;
       if (p.body) {
-        var data = Object.assign({}, this.state.data);
+        data = Object.assign({}, this.state.data);
         var meta = Object.assign({}, this.state.meta);
 
         data[property] = p.body;
@@ -57,20 +57,20 @@ class BasePage extends BaseComponent {
         }
 
         this.setState({
-          data: data,
-          meta: meta,
+          data,
+          meta,
         });
 
         if (property === 'preferences') {
           this.props.app.emit(constants.TOGGLE_OVER_18, p.body.over_18);
         }
       } else {
-        var data = Object.assign({}, this.state.data);
+        data = Object.assign({}, this.state.data);
 
         data[property] = p;
 
         this.setState({
-          data: data,
+          data,
         });
       }
     }, (e) => {
@@ -81,7 +81,7 @@ class BasePage extends BaseComponent {
 
   buildTrackingPixelProps(url, props) {
     return {
-      url: url,
+      url,
       referrer: props.ctx.referrer,
       loid: props.loid,
       loidcreated: props.loidcreated,
