@@ -30,6 +30,8 @@ import constants from './constants';
 
 import defaultConfig from './config';
 
+var foo = 'bar';
+
 const config = defaultConfig();
 
 function setData(ctx, key, endpoint, options) {
