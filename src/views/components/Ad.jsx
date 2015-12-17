@@ -34,20 +34,6 @@ class Ad extends BaseComponent {
     return listing.checkPos.apply(listing, arguments);
   }
 
-  resize() {
-    if (!this.state.loaded) {
-      return;
-    }
-
-    let listing = this._listing;
-
-    if (!listing) {
-      return;
-    }
-
-    listing.resize.apply(listing, arguments);
-  }
-
   async getAd() {
     let { srnames, subredditName, app, token, loid } = this.props;
     let { authAPIOrigin, nonAuthAPIOrigin, adsPath } = app.config;

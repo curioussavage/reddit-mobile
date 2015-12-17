@@ -27,13 +27,13 @@ describe('Ad', () => {
       ctx.instance.setState({
         loaded: true,
         ad: {_type: 'link'},
-      }, () => console.log('hello world'));
+      });
       ctx.result = ctx.renderer.getRenderOutput();
     });
 
     it('renders a Listing component', () => {
-      console.log('reuslt is  \n\n\n',ctx.result)
-      expect(ctx.result.type).to.equal(Listing);    
+      console.log('reuslt is  \n\n\n',ctx.result);
+      expect(ctx.result.type).to.equal(Listing);
     });
   });
 
