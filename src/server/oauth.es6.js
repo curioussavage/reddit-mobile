@@ -503,24 +503,27 @@ var oauthRoutes = function(app) {
       return this.redirect('/register?error=EMAIL_NEWSLETTER');
     }
 
-    const URI = yield new Promise((resolve, reject) => {
+    try {
+      const URI = yield new Promise((resolve, reject) => {
+        let headers = Object.assign({
+          'User-Agent': this.headers['user-agent'],
+        }, app.config.apiHeaders || {});
 
-      let headers = Object.assign({
-        'User-Agent': this.headers['user-agent'],
-      }, app.config.apiHeaders || {});
+        assignPassThroughHeaders(headers, this, app);
 
-      assignPassThroughHeaders(headers, this, app);
+        superagent
+          .post(endpoint)
+          .set(headers)
+          .type('form')
+          .send(data)
+          .timeout(constants.DEFAULT_API_TIMEOUT)
+          .end(handleRegisterResponse(resolve, reject, data, this));
+      });
 
-      superagent
-        .post(endpoint)
-        .set(headers)
-        .type('form')
-        .send(data)
-        .timeout(constants.DEFAULT_API_TIMEOUT)
-        .end(handleRegisterResponse(resolve, reject, data, this));
-    });
-
-    this.redirect(URI);
+      this.redirect(URI);
+    } catch (errorURI) {
+      this.redirect(errorURI);
+    }
   });
 };
 
