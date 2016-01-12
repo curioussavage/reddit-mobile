@@ -387,7 +387,7 @@ var oauthRoutes = function(app) {
       duration: 'permanent',
     };
 
-    const p = new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
       let headers = {
         'User-Agent': ctx.headers['user-agent'],
         'Authorization': basicAuth,
@@ -422,29 +422,47 @@ var oauthRoutes = function(app) {
           resolve(200);
         });
     });
-
-    return p;
   }
 
-  async function handleLogin(username, passwd, ctx) {
+  async function getLoginRedirect(username, passwd, ctx) {
     try {
       const status = await login(username, passwd, ctx);
       const dest = ctx.body.originalUrl || '';
 
       if (status === 200) {
         if (dest) {
-          ctx.redirect(app.config.origin + dest);
+          return `${app.config.origin}${dest}`;
         } else {
-          ctx.redirect('/');
+          return '/';
         }
       }
     } catch (e) {
       if (Array.isArray(e)) {
-        ctx.redirect(`/login?error=${e[0]}&message=${e[1]}`);
+        return `/login?error=${e[0]}&message=${e[1]}`;
       } else {
-        ctx.redirect(`/login?error=${e}`);
+        return `/login?error=${e}`;
       }
     }
+  }
+
+  function handleRegisterResponse(resolve, reject, data, ctx) {
+    return async function (err, res) {
+      if (err || !res.ok) {
+        if (err.timeout) { res.status = 504; }
+        return reject(`/register?error=${(res.status || 500)}`);
+      }
+
+      /* temporary while api returns a `200` with an error in body */
+      if (has(res, 'body.json.errors.0')) {
+        const error = res.body.json.errors[0];
+
+        return reject(`/register?error=${error[0]}&message=${error[1]}`);
+      }
+
+      const redirectURI = await getLoginRedirect(data.user, data.passwd, ctx);
+
+      resolve(redirectURI);
+    };
   }
 
   /*
@@ -454,7 +472,8 @@ var oauthRoutes = function(app) {
    */
   router.post('/login', function * () {
     const { username, password } = this.body;
-    yield handleLogin(username, password, this);
+    const url = yield getLoginRedirect(username, password, this);
+    this.redirect(url);
   });
 
   router.post('/register', function * () {
@@ -484,7 +503,7 @@ var oauthRoutes = function(app) {
       return this.redirect('/register?error=EMAIL_NEWSLETTER');
     }
 
-    const p = new Promise(function(resolve, reject) {
+    const URI = yield new Promise((resolve, reject) => {
 
       let headers = Object.assign({
         'User-Agent': this.headers['user-agent'],
@@ -498,23 +517,10 @@ var oauthRoutes = function(app) {
         .type('form')
         .send(data)
         .timeout(constants.DEFAULT_API_TIMEOUT)
-        .end((err, res) => {
-          if (err || !res.ok) {
-            if (err.timeout) { res.status = 504; }
-            return reject(this.redirect(`/register?error=${(res.status || 500)}`));
-          }
-
-          /* temporary while api returns a `200` with an error in body */
-          if (has(res, 'body.json.errors.0')) {
-            const error = res.body.json.errors[0];
-            return reject(this.redirect(`/register?error=${error[0]}&message=${error[1]}`));
-          }
-
-          handleLogin(data.user, data.passwd, this);
-        });
+        .end(handleRegisterResponse(resolve, reject, data, this));
     });
 
-    yield p;
+    this.redirect(URI);
   });
 };
 
