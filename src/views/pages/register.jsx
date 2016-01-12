@@ -2,6 +2,7 @@ import React from 'react';
 import querystring from 'querystring';
 
 import BasePage from './BasePage';
+import SnooIconHeader from '../components/snooiconheader';
 
 const ERROR_MESSAGES = {
   EMAIL_NEWSLETTER: 'please enter an email to sign up for the newsletter',
@@ -26,6 +27,16 @@ class RegisterPage extends BasePage {
     error: React.PropTypes.string,
     message: React.PropTypes.string,
   };
+
+  constructor(props) {
+    super(props);
+
+    this.goBack = this.goBack.bind(this);
+  }
+
+  goBack() {
+    this.props.app.redirect('/');
+  }
 
   render () {
     let usernameClass = '';
@@ -69,13 +80,16 @@ class RegisterPage extends BasePage {
         <div className={ errorClass } role='alert'>
           { message }
         </div>
-
+        <SnooIconHeader title='Sign up' close={ this.goBack } />
         <div className='container'>
           <div className='row'>
             <div className='col-xs-12 col-sm-6 LoginPage'>
-
-              <h1 className='title h4'>Create a New Account</h1>
-
+              <p className='login-register-link'>
+                <a
+                  href={ '/login' + linkDest }
+                  data-no-route='true'
+                >Already have an account? Log in!</a>
+              </p>
               <form action='/register' method='POST'>
                 <div className={ `${usernameClass} form-group` }>
                   <label htmlFor='username' className='hidden'>Username</label>
@@ -136,13 +150,6 @@ class RegisterPage extends BasePage {
 
                 <button type='submit' className='btn-post btn-block'>Create Account</button>
               </form>
-
-              <p>
-                <a
-                  href={ `/login${linkDest}` }
-                  data-no-route='true'
-                >Already have an account? Log in!</a>
-              </p>
             </div>
           </div>
 

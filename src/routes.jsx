@@ -675,6 +675,7 @@ function routes(app) {
     const { error, message } = this.query;
     const originalUrl = loginRegisterOriginalUrl(this.query, this.headers);
     this.props = {...this.props, error, message, originalUrl };
+    this.props.hideTopNav = true;
     this.body = makeBody(LoginPage);
   });
 
@@ -682,6 +683,7 @@ function routes(app) {
     const { error, message } = this.query;
     const originalUrl = loginRegisterOriginalUrl(this.query, this.headers);
     this.props = {...this.props, error, message, originalUrl };
+    this.props.hideTopNav = true;
     this.body = makeBody(RegisterPage);
   });
 

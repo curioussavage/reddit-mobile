@@ -2,6 +2,7 @@ import React from 'react';
 import querystring from 'querystring';
 
 import BasePage from './BasePage';
+import SnooIconHeader from '../components/snooiconheader';
 
 const ERROR_MESSAGES = {
   504: 'The request timed out',
@@ -16,6 +17,16 @@ class LoginPage extends BasePage {
     message: React.PropTypes.string,
     originalUrl: React.PropTypes.string,
   };
+
+  constructor(props) {
+    super(props);
+
+    this.goBack = this.goBack.bind(this);
+  }
+
+  goBack() {
+    this.props.app.redirect('/');
+  }
 
   render () {
     const { error, message, originalUrl, ctx } = this.props;
@@ -44,16 +55,23 @@ class LoginPage extends BasePage {
       refererTag = <input type='hidden' name='originalUrl' value={ originalUrl } />;
     }
 
+
+
     return (
-      <div>
+      <div className='login-wrapper'>
         <div className={ errorClass } role='alert'>
           { errorMessage }
         </div>
+        <SnooIconHeader title='Log in' close={ this.goBack } />
         <div className='container'>
           <div className='row'>
             <div className='col-xs-12 col-sm-6 LoginPage'>
-              <h1 className='title h4'>Log in</h1>
-
+              <p className='login-register-link'>
+                <a
+                  href={ '/register' + linkDest }
+                  data-no-route='true'
+                >New user? Sign up!</a>
+              </p>
               <form action='/login' method='POST'>
                 <div className='form-group'>
                   <label htmlFor='username' className='hidden'>Username</label>
@@ -83,13 +101,6 @@ class LoginPage extends BasePage {
 
                 <button type='submit' className='btn-post btn-block'>Log In</button>
               </form>
-
-              <p>
-                <a
-                  href={ `/register${linkDest}` }
-                  data-no-route='true'
-                >Don't have an account? Register!</a>
-              </p>
             </div>
           </div>
         </div>
