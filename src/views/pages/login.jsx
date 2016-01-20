@@ -3,6 +3,8 @@ import querystring from 'querystring';
 
 import BasePage from './BasePage';
 import SnooIconHeader from '../components/snooiconheader';
+import Modal from '../components/Modal';
+import ForgotPassword from '../components/forgotpassword';
 
 import MinimalInput from '../components/formElements/minimalinput';
 import SquareButton from '../components/formElements/SquareButton';
@@ -41,6 +43,8 @@ class LoginPage extends BasePage {
       passwordText: '',
     };
 
+    this.state.showForgot = false;
+
     this.goBack = this.goBack.bind(this);
     this.toggleShowForgot = this.toggleShowForgot.bind(this);
     this.updateUsername = this.updateField.bind(this, 'usernameText');
@@ -67,7 +71,7 @@ class LoginPage extends BasePage {
   }
 
   toggleShowForgot(e) {
-    e.preventDefault();
+    if (e) { e.preventDefault(); }
     this.setState({showForgot: !this.state.showForgot});
   }
 
@@ -80,7 +84,7 @@ class LoginPage extends BasePage {
   }
 
   render () {
-    const { error, originalUrl, ctx } = this.props;
+    const { error, originalUrl, ctx, app } = this.props;
     const { passwordFieldType, showForgot,
             errorMessage, passwordText, usernameText } = this.state;
 
@@ -100,6 +104,15 @@ class LoginPage extends BasePage {
     }
 
     const blue = passwordFieldType === 'text' ? 'blue' : '';
+
+    let forgotPassword;
+    if (showForgot) {
+      forgotPassword = (
+        <Modal open={ true } close={ this.toggleShowForgot }>
+          <ForgotPassword app={ app } close={ this.toggleShowForgot }/>
+        </Modal>
+      );
+    }
 
     return (
       <div className='login-wrapper'>
@@ -165,6 +178,7 @@ class LoginPage extends BasePage {
             </div>
           </div>
         </div>
+        { forgotPassword }
       </div>
     );
   }
