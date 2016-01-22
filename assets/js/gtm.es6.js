@@ -1,25 +1,23 @@
-'use strict';
-
 import frames from './frames';
 
-let jail = document.getElementById('gtm-jail');
+export default {
+  trigger(eventName, payload) {
+    const jailEl = document.getElementById('gtm-jail');
+    if (jailEl) {
+      if (payload) {
+        this.set(payload);
+      }
 
-let gtm = {
-
-  trigger: function(eventName, payload) {
-    if (payload) {
-      this.set(payload);
+      frames.postMessage(jailEl.contentWindow, 'event.gtm', {
+        event: eventName,
+      });
     }
-
-    frames.postMessage(jail.contentWindow, 'event.gtm', {
-      event: eventName,
-    });
   },
 
-  set: function(data) {
-    frames.postMessage(jail.contentWindow, 'data.gtm', data);
+  set(data) {
+    const jailEl = document.getElementById('gtm-jail');
+    if (jailEl) {
+      frames.postMessage(jailEl.contentWindow, 'data.gtm', data);
+    }
   },
-
 };
-
-export default gtm;
