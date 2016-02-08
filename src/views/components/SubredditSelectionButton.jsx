@@ -1,5 +1,6 @@
 import React from 'react';
 import process from 'reddit-text-js';
+
 import propTypes from '../../propTypes';
 
 import BaseComponent from './BaseComponent';
@@ -10,6 +11,16 @@ import SeashellsDropdown from '../components/SeashellsDropdown';
 const _searchLimit = 25;
 
 class SubredditSelectionButton extends BaseComponent {
+  static propTypes = {
+    changeSubreddit: React.PropTypes.func.isRequired,
+    errorClass: React.PropTypes.string.isRequired,
+    goToAboutPage: React.PropTypes.func,
+    open: React.PropTypes.bool.isRequired,
+    subreddit: React.PropTypes.string.isRequired,
+    subscriptions: propTypes.subscriptions,
+    toggleOpen: React.PropTypes.func.isRequired,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -40,16 +51,16 @@ class SubredditSelectionButton extends BaseComponent {
       lastQuery: newVal,
     });
 
-    var api = this.props.app.api;
+    const api = this.props.app.api;
 
-    var options = api.buildOptions(this.props.apiOptions);
+    const options = api.buildOptions(this.props.apiOptions);
     options.query.type = ['sr'];
     options.query.limit = _searchLimit;
     options.query.q = newVal;
 
     api.search.get(options).then(function (data={}) {
       if (data.body && data.body.subreddits) {
-        var newSubs = data.body.subreddits.map((sub) => {
+        const newSubs = data.body.subreddits.map((sub) => {
           return {
             display_name: sub.display_name,
             icon_img: sub.icon_img,
@@ -102,14 +113,14 @@ class SubredditSelectionButton extends BaseComponent {
   }
 
   render () {
-    var props = this.props;
-    var content;
+    const props = this.props;
+    let content;
 
     if (this.state.loaded) {
       content = this.state.subs.map(function(sub, i) {
-        var expandContent;
+        let expandContent;
         if (this.state.submitRules.name === sub.display_name) {
-          var text = this.state.submitRules.text || 'No rules specified...';
+          const text = this.state.submitRules.text || 'No rules specified...';
           expandContent = (
             <div className='container sub-selection-rules'>
 
@@ -185,33 +196,22 @@ class SubredditSelectionButton extends BaseComponent {
             </div>
           </div>
         );
-    } else {
-      return (
-        <div className="sub-selection-selected">
-          <div className='Submit-centered'>
-            <span onClick={ this.toggle } className='text-muted submit-posting-to' >
-              Posting to: &nbsp;
-              <button type='button' className={ this.props.errorClass }>
-                { props.subreddit }
-                <span className='icon-caron'/>
-              </button>
-            </span>
-          </div>
-        </div>
-      );
     }
+
+    return (
+      <div className="sub-selection-selected">
+        <div className='Submit-centered'>
+          <span onClick={ this.toggle } className='text-muted submit-posting-to' >
+            Posting to: &nbsp;
+            <button type='button' className={ this.props.errorClass }>
+              { props.subreddit }
+              <span className='icon-caron'/>
+            </button>
+          </span>
+        </div>
+      </div>
+    );
   }
 }
-
-SubredditSelectionButton.propTypes = {
-  // apiOptions: React.PropTypes.object,
-  changeSubreddit: React.PropTypes.func.isRequired,
-  errorClass: React.PropTypes.string.isRequired,
-  goToAboutPage: React.PropTypes.func,
-  open: React.PropTypes.bool.isRequired,
-  subreddit: React.PropTypes.string.isRequired,
-  subscriptions: propTypes.subscriptions,
-  toggleOpen: React.PropTypes.func.isRequired,
-};
 
 export default SubredditSelectionButton;

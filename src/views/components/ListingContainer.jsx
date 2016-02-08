@@ -1,12 +1,29 @@
 import React from 'react';
+
 import constants from '../../constants';
 
 import BaseComponent from './BaseComponent';
 import ListingList from './ListingList';
+import ListingPaginationButtons from './ListingPaginationButtons';
 
 const Proptypes = React.PropTypes;
 
 class ListingContainer extends BaseComponent {
+  static propTypes = {
+    compact: Proptypes.bool,
+    shouldPage: Proptypes.bool,
+    listingClassName: Proptypes.string,
+    listings: Proptypes.array,
+    ctx: Proptypes.object,
+    pagingPrefix: Proptypes.string,
+    prevUrl: Proptypes.string,
+    nextUrl: Proptypes.string,
+  };
+
+  static defaultProps = {
+    shouldPage: true,
+  };
+
   constructor(props) {
     super(props);
 
@@ -30,24 +47,46 @@ class ListingContainer extends BaseComponent {
   }
 
   render() {
-    const props = this.props;
+    const {
+      listings,
+      ctx,
+      shouldPage,
+      pagingPrefix,
+      prevUrl,
+      nextUrl,
+      listingClassName,
+      pageSize,
+    } = this.props;
+
     const compact = this.state.compact;
 
-    return (
-      <div className={ 'container Listing-container' + (compact ? ' compact' : '') }>
-        <ListingList
-          { ...props }
+    let pagination;
+
+    // Default paging to `true`
+    if (shouldPage && listings.length) {
+      pagination = (
+        <ListingPaginationButtons
+          pagingPrefix={ pagingPrefix }
+          listings={ listings }
           compact={ compact }
-          className = { props.listingClassName }
+          ctx={ ctx }
+          prevUrl={ prevUrl }
+          nextUrl={ nextUrl }
+          pageSize={ pageSize }
         />
-        { this.props.children }
+      );
+    }
+
+    return (
+      <div className={ `container Listing-container${(compact ? ' compact' : '')}` }>
+        <ListingList
+          { ...this.props }
+          compact={ compact }
+          className = { listingClassName }
+        />
+        { pagination }
       </div>
     );
-  }
-
-  static propTypes = {
-    compact: Proptypes.bool,
-    listingClassName: Proptypes.string,
   }
 }
 

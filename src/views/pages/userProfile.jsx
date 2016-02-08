@@ -6,6 +6,10 @@ import TopSubnav from '../components/TopSubnav';
 import UserProfile from '../components/UserProfile';
 
 class UserProfilePage extends BasePage {
+  static propTypes = {
+    userName: React.PropTypes.string.isRequired,
+  };
+  
   get track () {
     return 'userProfile';
   }
@@ -17,11 +21,11 @@ class UserProfilePage extends BasePage {
       );
     }
 
-    var userProfile = this.state.data.userProfile;
-    var name = this.props.userName;
+    const userProfile = this.state.data.userProfile;
+    const name = this.props.userName;
 
     return (
-      <div className="user-page user-profile">
+      <div className='user-page user-profile'>
         <TopSubnav
           app={ this.props.app }
           user={ this.state.data.user }
@@ -30,7 +34,7 @@ class UserProfilePage extends BasePage {
 
         <UserProfile
           userProfile={ userProfile }
-          key={ 'user-profile-' + name }
+          key={ `user-profile-${name}` }
           user={ this.props.user }
           token={ this.props.token }
           app={ this.props.app }
@@ -39,9 +43,5 @@ class UserProfilePage extends BasePage {
     );
   }
 }
-
-UserProfilePage.propTypes = {
-  userName: React.PropTypes.string.isRequired,
-};
 
 export default UserProfilePage;

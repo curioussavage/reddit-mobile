@@ -6,6 +6,16 @@ import Loading from '../components/Loading';
 import UserActivitySubnav from '../components/UserActivitySubnav';
 
 class UserActivityPage extends BasePage {
+  static propTypes = {
+    activity: React.PropTypes.string.isRequired,
+    after: React.PropTypes.string,
+    before: React.PropTypes.string,
+    data: React.PropTypes.object,
+    page: React.PropTypes.number,
+    sort: React.PropTypes.string,
+    userName: React.PropTypes.string.isRequired,
+  };
+  
   get track() {
     return 'activity';
   }
@@ -20,27 +30,34 @@ class UserActivityPage extends BasePage {
     const props = this.props;
     const state = this.state;
 
-    const page = props.page || 0;
-    const token = props.token;
-    const app = props.app;
+    const {
+      page = 0,
+      sort = 'hot',
+      compact,
+      apiOptions,
+      token,
+      app,
+      ctx,
+      userName,
+    } = this.props;
+
     const user = state.data.user;
     const activities = state.data.activities;
-    const sort = props.sort || 'hot';
-    const name = props.userName;
 
     return (
       <div className="user-page user-activity">
         <UserActivitySubnav
           app={ app }
           sort={ sort }
-          name={ name }
+          name={ userName }
           activity={ props.activity }
           user={ user }
         />
 
         <ListingContainer
-          compact={ props.compact }
           app={ app }
+          compact={ compact }
+          ctx={ ctx }
           listings={ activities }
           firstPage={ page }
           page={ page }
@@ -48,24 +65,12 @@ class UserActivityPage extends BasePage {
           user={ user }
           token={ token }
           hideUser={ true }
-          apiOptions={ props.apiOptions }
-          winWidth={ props.ctx.winWidth }
+          apiOptions={ apiOptions }
+          winWidth={ ctx.winWidth }
         />
       </div>
     );
   }
 }
-
-//TODO: someone more familiar with this component could eventually fill this out better
-UserActivityPage.propTypes = {
-  activity: React.PropTypes.string.isRequired,
-  after: React.PropTypes.bool,
-  // apiOptions: React.PropTypes.object,
-  before: React.PropTypes.bool,
-  data: React.PropTypes.object,
-  page: React.PropTypes.number,
-  sort: React.PropTypes.string,
-  userName: React.PropTypes.string.isRequired,
-};
 
 export default UserActivityPage;

@@ -1,6 +1,7 @@
 import React from 'react';
-import BaseComponent from './BaseComponent';
 import { models } from 'snoode';
+
+import BaseComponent from './BaseComponent';
 import constants from '../../constants';
 
 const message = 'You must be at least eighteen years old to view this content.' +
@@ -15,6 +16,12 @@ const contentMap = {
 };
 
 class Interstitial extends BaseComponent {
+  static propTypes = {
+    subredditName: React.PropTypes.string.isRequired,
+    type: React.PropTypes.string.isRequired,
+    customText: React.PropTypes.string,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -23,14 +30,18 @@ class Interstitial extends BaseComponent {
   }
 
   async setOver18 () {
-    var {app, apiOptions, topNavLink} = this.props;
-    if (this.props.loggedIn) {
-      var options = app.api.buildOptions(apiOptions);
+    const {
+      app,
+      apiOptions,
+      topNavLink,
+    } = this.props;
 
-      options = Object.assign(options, {
+    if (this.props.loggedIn) {
+      const options = {
+        ...app.api.buildOptions(apiOptions),
         model: new models.Preferences({over_18: true}),
         changeSet: ['over_18'],
-      });
+      };
 
       try {
         await app.api.preferences.patch(options);
@@ -50,8 +61,8 @@ class Interstitial extends BaseComponent {
   }
 
   render() {
-    let props = this.props;
-    let info = contentMap[props.type];
+    const props = this.props;
+    const info = contentMap[props.type];
 
     let customText;
     let buttons;
@@ -76,7 +87,7 @@ class Interstitial extends BaseComponent {
         <div className='panel interstitial-custom-text-panel'>
         <h3
           className='interstitial-custom-text-header'
-        >{ '/r/' +  props.subredditName || '/r/subreddit' }</h3>
+        >{ `/r/${props.subredditName || '/r/subreddit'}` }</h3>
         <p>{ props.customText || 'hello world this is a custom message for thi spanel' }</p>
         </div>
         );
@@ -96,11 +107,5 @@ class Interstitial extends BaseComponent {
     );
   }
 }
-
-Interstitial.propTypes = {
-  subredditName: React.PropTypes.string.isRequired,
-  type: React.PropTypes.string.isRequired,
-  customText: React.PropTypes.string,
-};
 
 export default Interstitial;

@@ -1,14 +1,16 @@
 import querystring from 'querystring';
-import crypto from 'crypto'
+import crypto from 'crypto';
 import superagent from 'superagent';
 import EventTracker from 'event-tracker';
 import constants from '../../src/constants';
+import url from 'url';
+import gtm from './gtm';
 
 // Build a regex which can pull the base36 out of a prefixed or unprefixed id.
 const idRegex = /(?:t\d+_)?(.*)/;
 
 function calculateHash (key, string) {
-  let hmac = crypto.createHmac('sha256', key);
+  const hmac = crypto.createHmac('sha256', key);
   hmac.setEncoding('hex');
   hmac.write(string);
   hmac.end();
@@ -25,7 +27,7 @@ function postData(eventInfo) {
     .query(query)
     .timeout(constants.DEFAULT_API_TIMEOUT)
     .send(data)
-    .end(function(){});
+    .end(function() {});
 }
 
 function trackingEvents(app) {
@@ -54,17 +56,29 @@ function trackingEvents(app) {
   }
 
   function convertId (id) {
-    let unprefixedId = idRegex.exec(id)[1];
+    const unprefixedId = idRegex.exec(id)[1];
     return parseInt(unprefixedId, 36);
+  }
+
+  function isOtherListing(props) {
+    return props.ctx.params.subreddit || props.ctx.params.multi ||
+      props.ctx.path === '/';
   }
 
   function buildPageviewData (props) {
     const LINK_LIMIT = 25;
 
-    let data = {
-      referrer_url: props.ctx.referrer,
-      language: window.navigator.language.split('=')[0],
+
+    const data = {
+      language: 'en', // NOTE: update when there are translations
     };
+
+    if (props.ctx.referrer) {
+      data.referrer_url = props.ctx.referrer;
+      data.referrer_domain = url.parse(props.ctx.referrer).host;
+    }
+
+    data.dnt = !!window.DO_NOT_TRACK;
 
     // If there is a logged-in user, add the user's data to the payload
     if (props.data.user) {
@@ -94,7 +108,16 @@ function trackingEvents(app) {
         data.target_sort = props.ctx.query.sort || 'confidence';
       } else {
         data.target_sort = props.ctx.query.sort || 'hot';
-        data.target_limit = LINK_LIMIT;
+        data.target_count = LINK_LIMIT;
+
+        const query = props.ctx.query;
+        if (query.before) {
+          data.target_before = query.before;
+        }
+
+        if (query.after) {
+          data.target_after = query.after;
+        }
       }
     }
 
@@ -107,7 +130,7 @@ function trackingEvents(app) {
       props.data.subreddit
     );
 
-    data.compact_view = props.compact ? 'T' : 'F';
+    data.compact_view = props.compact;
 
     if (target) {
       // Subreddit ids/names are swapped
@@ -117,9 +140,9 @@ function trackingEvents(app) {
         data.target_type = 'comment';
       } else if (target._type === 'Subreddit') {
         data.target_id = convertId(target.name);
-        data.target_name = target.id;
         data.target_fullname = `${target.name}`;
-        data.target_type = 'subreddit';
+        data.target_type = 'listing';
+        data.listing_name = target.id;
       } else if (target._type === 'Link') {
         data.target_id = convertId(target.id);
         data.target_fullname = `t3_${target.id}`;
@@ -138,6 +161,23 @@ function trackingEvents(app) {
         data.target_url = target.url;
         data.target_url_domain = target.domain;
       }
+    } else if (isOtherListing(props)) {
+      // Fake subreddit, mark it as a listing
+      data.target_type = 'listing';
+
+      // explicitly check that this is the frontpage
+      if (props.ctx.path === '/') {
+        data.listing_name = 'frontpage';
+      } else if (props.ctx.params.subreddit) {
+        const subreddit = props.ctx.params.subreddit;
+        if (subreddit.indexOf('+') !== -1) {
+          data.listing_name = 'multi';
+        } else {
+          data.listing_name = subreddit;
+        }
+      } else if (props.ctx.params.multi) {
+        data.listing_name = 'multi';
+      }
     }
 
     return data;
@@ -146,6 +186,7 @@ function trackingEvents(app) {
   app.on('pageview', function(props) {
     const payload = buildPageviewData(props);
     eventSend('screenview_events', 'cs.screenview', payload);
+    gtm.trigger('pageview', { subreddit: props.ctx.params.subreddit || '' });
   });
 
   app.on('route:start', function(ctx) {
@@ -153,7 +194,7 @@ function trackingEvents(app) {
     let fullUrl = ctx.path;
 
     if (query) {
-      fullUrl += '?' + query;
+      fullUrl += `?${query}`;
     }
 
     gaSend('set', 'page', fullUrl);
@@ -185,14 +226,16 @@ function trackingEvents(app) {
   });
 
   app.on('comment', function (comment) {
-    gaSend('send', 'event', 'comment', 'words', comment.get('text').match(/\S+/g).length);
+    if (comment.text) {
+      gaSend('send', 'event', 'comment', 'words', comment.text.match(/\S+/g).length);
+    }
   });
 
   app.on('comment:edit', function() {
     gaSend('send', 'event', 'comment', 'edit');
   });
 
-  app.on('search', function (query) {
+  app.on('search', function () {
     gaSend('send', 'event', 'search');
   });
 
@@ -200,7 +243,7 @@ function trackingEvents(app) {
     gaSend('send', 'event', 'goto', query);
   });
 
-  app.on('report', function (query) {
+  app.on('report', function () {
     gaSend('send', 'event', 'report');
   });
 
@@ -225,7 +268,9 @@ function trackingEvents(app) {
   });
 
   app.on('message:reply', function(message) {
-    gaSend('send', 'event', 'messages', 'reply', message.get('text').match(/\S+/g).length);
+    if (message.text) {
+      gaSend('send', 'event', 'messages', 'reply', message.text.match(/\S+/g).length);
+    }
   });
 }
 

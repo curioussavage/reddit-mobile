@@ -9,13 +9,13 @@ import bodyParser from 'koa-bodyparser';
 import csrf from 'koa-csrf';
 import compress from 'koa-compress';
 
-import session from 'koa-session';
+import koasession from 'koa-session';
 import StatsdClient from 'statsd-client';
 
 import ServerReactApp from 'horse-react/src/server';
 import mixin from '../app-mixin';
 
-var App = mixin(ServerReactApp);
+const App = mixin(ServerReactApp);
 
 // The core
 import constants from '../constants';
@@ -25,9 +25,9 @@ import routes from '../routes';
 
 import setLoggedOutCookies from '../lib/loid';
 
-import defaultConfig from '../config';
+import Config from '../config';
 
-const ignoreCSRF = ['/timings'];
+const ignoreCSRF = ['/timings', '/error'];
 
 function getBucket(loid) {
   return parseInt(loid.substring(loid.length - 4), 36) % 100;
@@ -39,7 +39,7 @@ function formatProps (props = {}) {
 }
 
 function setExperiment(app, ctx, id, value) {
-  let cookieOptions = {
+  const cookieOptions = {
     secure: app.getConfig('https'),
     secureProxy: app.getConfig('httpsProxy'),
     httpOnly: false,
@@ -67,17 +67,17 @@ function setCompact(ctx, app) {
 
   let compact = (ctx.cookies.get('compact') || '').toString() === 'true';
 
-  let cookieOptions = {
+  const cookieOptions = {
     secure: app.getConfig('https'),
     secureProxy: app.getConfig('httpsProxy'),
     httpOnly: false,
     maxAge: 1000 * 60 * 60 * 24 * 365 * 2,
   };
 
-  let ua = ctx.headers['user-agent'];
+  const ua = ctx.headers['user-agent'];
 
   // Set compact for opera mini
-  if (ua.match(/(opera mini|android 2)/i)) {
+  if (ua && ua.match(/(opera mini|android 2)/i)) {
     compact = true;
   }
 
@@ -97,10 +97,11 @@ function setCompact(ctx, app) {
 }
 
 // Save a static reference to the config object at startup
-const config = defaultConfig();
+const defaultConfig = Config();
 function formatBootstrap(props) {
-  for (var p in props.config) {
-    if (!config.hasOwnProperty(p)) {
+  let p;
+  for (p in props.config) {
+    if (!defaultConfig.hasOwnProperty(p)) {
       delete props.config[p];
     }
   }
@@ -118,28 +119,28 @@ class Server {
     config.experiments = config.experiments || [];
     config.formatBootstrap = formatBootstrap;
 
-    var app = new App(config);
+    const app = new App(config);
 
     oauthRoutes(app);
     serverRoutes(app, this);
     routes(app);
 
-    var server = koa();
+    const server = koa();
     server.keys = config.keys;
 
     // tell koa-session what security settings to use for the session cookie
-    var sessionOptions = {
+    const sessionOptions = {
       secure: config.https,
       secureProxy: config.httpsProxy,
     };
 
     this.statsd = new StatsdClient(config.statsd || {
-      _socket:  { send: ()=>{}, close: ()=>{}  },
+      _socket: { send: ()=>{}, close: ()=>{} },
     });
 
-    let that = this;
+    const that = this;
     server.use(function * (next) {
-      let statsd = that.statsd;
+      const statsd = that.statsd;
 
       that.activeRequests++;
 
@@ -164,11 +165,11 @@ class Server {
         }
 
         if (this.props.timings.render) {
-          statsd.timing('timings.render',  this.props.timings.render);
+          statsd.timing('timings.render', this.props.timings.render);
         }
 
         if (this.props.timings.data) {
-          statsd.timing('timings.data',  this.props.timings.data);
+          statsd.timing('timings.data', this.props.timings.data);
         }
       }
     });
@@ -177,7 +178,7 @@ class Server {
     // responses don't get cached.
     server.use(this.cacheGuard());
 
-    server.use(session(server, sessionOptions));
+    server.use(koasession(server, sessionOptions));
     server.use(compress());
     server.use(bodyParser());
 
@@ -186,7 +187,7 @@ class Server {
 
     if (!config.assetPath) {
       // Set up static routes for built (and unbuilt, static) files
-      server.use(koaStatic(__dirname + '/../../build'));
+      server.use(koaStatic(`${__dirname}/../../build`));
     }
 
     server.use(this.checkToken(app));
@@ -250,7 +251,7 @@ class Server {
   setLOID (app) {
     return function * (next) {
       if (!this.cookies.get('loid')) {
-        let cookies = setLoggedOutCookies(this.cookies, app);
+        const cookies = setLoggedOutCookies(this.cookies, app);
 
         // koa doesn't return cookies set within the
         // same request, cache it for later
@@ -275,7 +276,7 @@ class Server {
         // If user came from desktop, and is a new user, treat them as new for
         // experiments.
         if (this.query.ref_source === 'desktop') {
-          let created = new Date(this.cookies.get('loidcreated'));
+          const created = new Date(this.cookies.get('loidcreated'));
 
           if (created.setMinutes(created.getMinutes() - 5) < Date.now()) {
             this.newUser = true;
@@ -287,20 +288,20 @@ class Server {
         this.newUser = true;
       }
 
-      let bucket = getBucket(loid);
+      const bucket = getBucket(loid);
       this.experiments = [];
 
       if (app.config.experiments.fiftyfifty &&
           this.newUser &&
           !this.cookies.get('fiftyfifty')) {
         // divide by two, because there are two possible buckets, plus control
-        let bucketSize = parseInt(app.config.experiments.fiftyfifty) / 2;
+        const bucketSize = parseInt(app.config.experiments.fiftyfifty) / 2;
 
         if (bucket < bucketSize) {
           setExperiment(app, this, 'fiftyfifty', 'A');
         } else if (bucket < bucketSize * 2) {
           setExperiment(app, this, 'fiftyfifty', 'B');
-        } else  {
+        } else {
           setExperiment(app, this, 'fiftyfifty', 'control');
         }
       } else if (this.cookies.get('fiftyfifty')) {
@@ -339,11 +340,11 @@ class Server {
 
       yield next;
 
-      var cookieHeaders = this.res.getHeader('Set-Cookie') || [];
+      const cookieHeaders = this.res.getHeader('Set-Cookie') || [];
       cookieHeaders.forEach(c => {
         c = c.split(/=/)[0];
         // this isn't a cacheable cookie or its signature cookie?
-        if (!constants.CACHEABLE_COOKIES.find(x => (x == c || x + '.sig' == c))) {
+        if (!constants.CACHEABLE_COOKIES.find(x => ([x, `${x}.sig`].includes(c)))) {
           // the response can't be cached, then
           this.set('Cache-Control', 'private, no-cache');
         }
@@ -359,8 +360,12 @@ class Server {
       this.env = 'SERVER';
 
       this.body = this.request.body;
-      this.userAgent = this.headers['user-agent'];
+      this.userAgent = this.headers['user-agent'] || '';
       this.country = this.headers['cf-ipcountry'];
+      this.notifications = (this.cookies.get('notifications') || '').split(',');
+
+      // reset notifications after read
+      this.cookies.set('notifications');
 
       if (!this.token) {
         this.token = this.cookies.get('token');
@@ -376,8 +381,6 @@ class Server {
       this.renderSynchronous = true;
       this.useCache = false;
 
-      this.isGoogleCrawler = this.userAgent.toLowerCase().indexOf('googlebot') > -1;
-
       yield next;
     };
   }
@@ -389,14 +392,14 @@ class Server {
         return;
       }
 
-      let session = this.cookies.get('reddit_session');
+      const session = this.cookies.get('reddit_session');
 
       if (!this.token &&
           !this.cookies.get('token') &&
           session) {
 
         try {
-          var token = yield app.convertSession(this, session);
+          const token = yield app.convertSession(this, session);
 
           this.token = token.token.access_token;
           this.tokenExpires = token.token.expires_at.toString();
@@ -420,16 +423,17 @@ class Server {
         return;
       }
 
-      var now = new Date();
-      var expires = this.cookies.get('tokenExpires');
+      const now = new Date();
 
-      expires = new Date(expires);
+      const cookieToken = this.cookies.get('token');
+      const cookieExpires = this.cookies.get('tokenExpires');
+      const rToken = this.cookies.get('refreshToken');
 
-      if (now > expires) {
-        var rToken = this.cookies.get('refreshToken');
+      const expires = new Date(cookieExpires);
 
+      if (cookieToken && rToken && now > expires) {
         try {
-          var token = yield app.refreshToken(this, rToken);
+          const token = yield app.refreshToken(this, rToken);
 
           this.token = token.token.access_token;
           this.tokenExpires = token.token.expires_at.toString();
@@ -443,6 +447,14 @@ class Server {
 
           return;
         }
+        // Sometimes, there's an empty token cookie. This is unexpected- a user
+        // should never have an expires but not a token or a refresh token - but
+        // in case their cookies get mangled somehow, we should nuke the invalid
+        // ones.
+      } else if (expires && (!cookieToken || !rToken)) {
+        this.cookies.set('token');
+        this.cookies.set('tokenExpires');
+        this.cookies.set('refreshToken');
       }
 
       yield next;

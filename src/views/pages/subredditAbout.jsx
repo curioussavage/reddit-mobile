@@ -1,11 +1,18 @@
 import React from 'react';
 import process from 'reddit-text-js';
 
+import formatNumber from '../../lib/formatNumber';
+
 import BasePage from './BasePage';
 import Loading from '../components/Loading';
 import TopSubnav from '../components/TopSubnav';
 
 class SubredditAboutPage extends BasePage {
+  static propTypes = {
+    // apiOptions: React.PropTypes.object,
+    subredditName: React.PropTypes.string.isRequired,
+  };
+
   get track () {
     return 'subreddit';
   }
@@ -18,15 +25,24 @@ class SubredditAboutPage extends BasePage {
       );
     }
 
-    var props = this.props;
+    const props = this.props;
+    const subreddit = this.state.data.subreddit;
 
-    var htmlDump;
-    var data = this.state.data.subreddit;
+    let htmlDump;
+    const data = this.state.data.subreddit;
+
+    let accountsActive;
+    if (data.accounts_active) {
+      accountsActive = (<li>
+        { `${formatNumber(data.accounts_active)} users here now` }
+        </li>
+      );
+    }
 
     htmlDump = [
       <ul className='subreddit-about-numbers' key='subreddit-about-numbers'>
-        <li>{ `${data.subscribers} readers` }</li>
-        <li>{ `${data.accounts_active} users here now` }</li>
+        <li>{ `${formatNumber(data.subscribers)} readers` }</li>
+        { accountsActive }
       </ul>,
       <div
         className='subreddit-about-rules'
@@ -35,13 +51,19 @@ class SubredditAboutPage extends BasePage {
       />,
     ];
 
+    const wikiLink = (
+      <a className='TopSubnav-a' href={ `${subreddit.url}wiki/index` }>
+        Wiki
+      </a>
+    );
+
     return (
       <div className='subreddit-about-main'>
         <TopSubnav
           { ...props }
           user={ this.state.data.user }
           subreddit={ this.state.data.subreddit }
-          hideSort={ true }
+          leftLink={ wikiLink }
         />
 
         <div className='container' key='container'>
@@ -51,10 +73,5 @@ class SubredditAboutPage extends BasePage {
     );
   }
 }
-
-SubredditAboutPage.propTypes = {
-  // apiOptions: React.PropTypes.object,
-  subredditName: React.PropTypes.string.isRequired,
-};
 
 export default SubredditAboutPage;

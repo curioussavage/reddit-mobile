@@ -2,7 +2,7 @@
 const SORTS = ['hot', 'new', 'rising', 'controversial', 'top', 'gilded'];
 
 function redirectSort (ctx, sort, subreddit) {
-  var url = `?sort=${sort}`;
+  let url = `?sort=${sort}`;
 
   if (subreddit) {
     url = `/r/${subreddit}${url}`;
@@ -19,7 +19,7 @@ function routes(app) {
       redirectSort(this, 'hot', this.params.subreddit);
     });
 
-    app.router.get('/r/:subreddit/' + sort, function *() {
+    app.router.get(`/r/:subreddit/${sort}`, function *() {
       redirectSort(this, sort, this.params.subreddit);
     });
   });
@@ -32,12 +32,17 @@ function routes(app) {
     return this.redirect(`/u/${this.params.user}/m/${this.params.multi}`);
   });
 
-  app.router.get('/search/:query', function*() {
+  app.router.get('/search/:query', function *() {
     return this.redirect(`/search?q=${this.params.query}`);
   });
 
-  app.router.get('/r/:subreddit/search/:query', function*() {
+  app.router.get('/r/:subreddit/search/:query', function *() {
     return this.redirect(`/r/${this.params.subreddit}/search?q=${this.params.query}`);
+  });
+
+  app.router.get('/help/*', function*() {
+    const url = this.params[0];
+    return this.redirect(`/wiki/${url}`);
   });
 }
 

@@ -1,9 +1,10 @@
 import superagent from 'superagent';
 import crypto from 'crypto';
+
 import constants from '../constants';
 
 // set up server-only routes
-let serverRoutes = function(app) {
+const serverRoutes = function(app) {
   const router = app.router;
 
   router.get('/robots.txt', function * () {
@@ -32,9 +33,9 @@ let serverRoutes = function(app) {
     `;
   });
 
-  router.post('/timings', function * () {
+  router.post('/timings', function *() {
     const statsURL = app.config.statsURL;
-    let timings = this.request.body.rum;
+    const timings = this.request.body.rum;
 
     if (!app.config.actionNameSecret) {
       console.log('returning early, no secret');
@@ -45,7 +46,7 @@ let serverRoutes = function(app) {
     const algorithm = 'sha1';
     let hash;
 
-    let hmac = crypto.createHmac(algorithm, secret);
+    const hmac = crypto.createHmac(algorithm, secret);
     hmac.setEncoding('hex');
     hmac.write(timings.actionName);
     hmac.end();
@@ -63,8 +64,7 @@ let serverRoutes = function(app) {
   });
 
 
-
-  router.get('/routes', function* () {
+  router.get('/routes', function *() {
     this.body = app.router.stack.routes
       .filter(function(r) {
         return (
@@ -78,6 +78,17 @@ let serverRoutes = function(app) {
           path: r.path,
         };
       });
+  });
+
+  router.post('/error', function* () {
+    // log it out if it's a legit origin
+    if (this.headers.origin &&
+        app.config.origin.indexOf(this.headers.origin) === 0) {
+      console.log(this.body.error.substring(0,1000));
+    }
+
+    this.body = null;
+    return;
   });
 };
 

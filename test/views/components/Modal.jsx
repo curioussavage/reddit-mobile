@@ -1,5 +1,4 @@
 import chai from 'chai';
-import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
 import shallowHelpers from 'react-shallow-renderer-helpers';
@@ -7,11 +6,11 @@ import renderWithProps from '../../helpers/renderWithProps';
 
 import { Modal } from '../../helpers/components';
 
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(sinonChai);
 
 describe('Modal', () => {
-  var ctx;
+  let ctx;
 
   beforeEach('render and find element', () => {
     ctx = renderWithProps({open: true}, Modal);
@@ -22,7 +21,7 @@ describe('Modal', () => {
   });
 
   it('should set the class "in" on modal when open is true', () => {
-    let modal = shallowHelpers.findClass(ctx.result, 'modal');
+    const modal = shallowHelpers.findClass(ctx.result, 'modal');
     expect(modal.props.className.indexOf('in')).to.not.equal(-1);
   });
 
@@ -38,10 +37,9 @@ describe('Modal', () => {
     });
 
     it('should not set "in" class on modal', () => {
-      let modal = shallowHelpers.findClass(ctx.result, 'modal');
+      const modal = shallowHelpers.findClass(ctx.result, 'modal');
       expect(modal.props.className.indexOf('in')).to.equal(-1);
     });
 
   });
-
 });

@@ -6,6 +6,12 @@ import TrackingPixel from '../../lib/TrackingPixel';
 import constants from '../../constants';
 
 class BasePage extends BaseComponent {
+  static propTypes = {
+    ctx: React.PropTypes.object.isRequired,
+    data: React.PropTypes.object.isRequired,
+    app: React.PropTypes.object.isRequired,
+  };
+  
   constructor (props) {
     super(props);
 
@@ -19,7 +25,8 @@ class BasePage extends BaseComponent {
     };
 
     if (props.dataCache) {
-      for (var k in props.dataCache) {
+      let k;
+      for (k in props.dataCache) {
         props.data.set(k, Promise.resolve(props.dataCache[k]));
 
         if (props.dataCache[k] && props.dataCache[k].body) {
@@ -31,19 +38,29 @@ class BasePage extends BaseComponent {
           }
         } else {
           this.state.data[k] = props.dataCache[k];
+
+          if (k === 'subreddit') {
+            props.app.emit(constants.SET_META_COLOR,
+              props.dataCache[k].key_color || constants.DEFAULT_KEY_COLOR);
+          }
         }
       }
     }
 
+    this.watchProperties();
+  } 
+
+  watchProperties() {
     // Handle no-data error-page case
     if (this.props.data) {
-      for (var key of this.props.data.keys()) {
-        if (!props.dataCache[key]) {
+      let key;
+      for (key of this.props.data.keys()) {
+        if (!this.props.dataCache[key]) {
           this.watch(key);
         }
       }
 
-      if (isEqual([...this.props.data.keys()].sort(), Object.keys(props.dataCache).sort())) {
+      if (isEqual([...this.props.data.keys()].sort(), Object.keys(this.props.dataCache).sort())) {
         this.finish();
       }
     }
@@ -54,7 +71,7 @@ class BasePage extends BaseComponent {
       let data;
       if (p.body) {
         data = Object.assign({}, this.state.data);
-        var meta = Object.assign({}, this.state.meta);
+        const meta = Object.assign({}, this.state.meta);
 
         data[property] = p.body;
         meta[property] = p.headers;
@@ -76,6 +93,10 @@ class BasePage extends BaseComponent {
 
         data[property] = p;
 
+        if (property === 'subreddit') {
+          this.props.app.emit(constants.SET_META_COLOR, p.key_color || constants.DEFAULT_KEY_COLOR);
+        }
+
         this.setState({
           data,
         });
@@ -91,9 +112,14 @@ class BasePage extends BaseComponent {
   }
 
   finish () {
-    if (this.state.finished === false && this.track) {
-      this.props.app.emit('pageview', { ...this.props, data: this.state.data });
-      this.setState({ finished: true });
+    if (this.props.ctx.env !== 'SERVER') {
+      if (this.state.finished === false && this.track) {
+        this.props.app.emit('pageview', {
+          ...this.props,
+          data: this.state.data,
+        });
+        this.setState({ finished: true });
+      }
     }
   }
 
@@ -105,7 +131,7 @@ class BasePage extends BaseComponent {
       loidcreated: props.loidcreated,
       user: props.user,
       compact: props.compact,
-      dnt: !!global.navigator.doNotTrack,
+      dnt: !!global.DO_NOT_TRACK,
     };
   }
 
@@ -114,8 +140,8 @@ class BasePage extends BaseComponent {
       return;
     }
 
-    let trackingProps = this.buildTrackingPixelProps(url, this.props);
-    let pixel = new TrackingPixel(trackingProps);
+    const trackingProps = this.buildTrackingPixelProps(url, this.props);
+    const pixel = new TrackingPixel(trackingProps);
     pixel.fire();
   }
 
@@ -123,11 +149,5 @@ class BasePage extends BaseComponent {
     this.props.app.emit('page:update', this.props);
   }
 }
-
-BasePage.propTypes = {
-  ctx: React.PropTypes.object.isRequired,
-  data: React.PropTypes.object.isRequired,
-  app: React.PropTypes.object.isRequired,
-};
 
 export default BasePage;

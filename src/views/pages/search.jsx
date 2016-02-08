@@ -3,7 +3,6 @@ import querystring from 'querystring';
 
 import BasePage from './BasePage';
 import ListingContainer from '../components/ListingContainer';
-import ListingPaginationButtons from '../components/ListingPaginationButtons';
 import Loading from '../components/Loading';
 import SearchSortSubnav from '../components/SearchSortSubnav';
 import SearchBar from '../components/SearchBar';
@@ -15,6 +14,23 @@ const _searchLimit = 25;
 const _searchLimitWithRecommendations = _searchLimit - 3;
 
 class SearchPage extends BasePage {
+  static isNoRecordsFound(data) {
+    return ((data || {}).links || []).length === 0 &&
+           ((data || {}).subreddits || []).length === 0;
+  }
+  
+  static propTypes = {
+    after: React.PropTypes.string,
+    // apiOptions: React.PropTypes.object,
+    before: React.PropTypes.string,
+    data: React.PropTypes.object,
+    page: React.PropTypes.number.isRequired,
+    sort: React.PropTypes.string.isRequired,
+    subredditName: React.PropTypes.string,
+    subreddits: React.PropTypes.object,
+    time: React.PropTypes.string.isRequired,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -68,7 +84,7 @@ class SearchPage extends BasePage {
   }
 
   _composeUrl(data) {
-    let qs = { q: data.query };
+    const qs = { q: data.query };
     if (data.after) { qs.after = data.after; }
     if (data.before) { qs.before = data.before; }
     if (data.page) { qs.page = data.page; }
@@ -76,13 +92,13 @@ class SearchPage extends BasePage {
     if (data.time) { qs.time = data.time; }
     if (data.type) { qs.type = data.type; }
 
-    return (data.subredditName ? `/r/${data.subredditName}` : '') +
-      '/search?' + querystring.stringify(qs);
+    const sub = (data.subredditName ? `/r/${data.subredditName}` : '');
+    return `${sub}/search?${querystring.stringify(qs)}`;
   }
 
   _composeSortingUrl(data) {
     const props = this.props;
-    let qs = { q: props.ctx.query.q };
+    const qs = { q: props.ctx.query.q };
     if (props.after) { qs.after = props.after; }
     if (props.before) { qs.before = props.before; }
     if (props.page) { qs.page = props.page; }
@@ -93,8 +109,8 @@ class SearchPage extends BasePage {
       if (props.sort) { qs.sort = props.sort; }
     }
 
-    return (props.subredditName ? `/r/${props.subredditName}` : '') +
-      '/search?' + querystring.stringify(qs);
+    const sub = (props.subredditName ? `/r/${props.subredditName}` : '');
+    return `${sub}/search?${querystring.stringify(qs)}`;
   }
 
   _generateUniqueKey() {
@@ -112,20 +128,35 @@ class SearchPage extends BasePage {
     this.props.app.redirect(url);
   }
 
+  shouldShowNoResultsMessage(data) {
+    if (!data.search) {
+      return true;
+    }
+
+    const props = this.props;
+
+    // If we're searching within a subreddit and have no results don't
+    // render the banner. The generic case will handle linking to the
+    // site-wide search
+    const searchingInSubreddit = !!(props.subredditName && props.ctx.query.q);
+    return !data.search.links ||
+      (data.search.links.length === 0 && !searchingInSubreddit);
+  }
+
   render() {
     const state = this.state;
+    const data = state.data;
     const props = this.props;
     const app = this.props.app;
     const apiOptions = props.apiOptions;
     let controls;
-    let noResult;
 
     if (!state.loaded && props.ctx.query && props.ctx.query.q) {
       controls = (
         <Loading />
       );
-    } else if (!this.state.data.search) {
-      const noResClass = noResult && props.ctx.query.q ? '' : 'hidden';
+    } else if (this.shouldShowNoResultsMessage(data)) {
+      const noResClass = props.ctx.query.q ? '' : 'hidden';
       controls = (
         <div
           className={ `container no-results text-right text-special ${noResClass}` }
@@ -142,7 +173,6 @@ class SearchPage extends BasePage {
       const listings = searchResults.links || [];
       const noListResults = listings.length === 0;
       const noSubResults = subreddits.length === 0;
-      noResult = noSubResults && noListResults;
       const subredditResultsOnly = props.subredditName && props.ctx.query.q;
       const compact = this.state.compact;
 
@@ -234,19 +264,17 @@ class SearchPage extends BasePage {
 
         <ListingContainer
           app={ app }
+          ctx={ props.ctx }
           listings={ listings }
           apiOptions={ apiOptions }
           user={ props.user }
           token={ props.token }
           winWidth={ props.ctx.winWidth }
           compact={ compact }
-        >
-            <ListingPaginationButtons
-              compact={ compact }
-              prevUrl={ prevUrl }
-              nextUrl={ nextUrl }
-            />
-        </ListingContainer>,
+          prevUrl={ prevUrl }
+          nextUrl={ nextUrl }
+          pageSize={ 22 }
+        />,
       ];
     }
 
@@ -263,24 +291,6 @@ class SearchPage extends BasePage {
       </div>
     );
   }
-
-  static isNoRecordsFound(data) {
-    return ((data || {}).links || []).length === 0 &&
-           ((data || {}).subreddits || []).length === 0;
-  }
 }
-
-//TODO: someone more familiar with this component could eventually fill this out better
-SearchPage.propTypes = {
-  after: React.PropTypes.string,
-  // apiOptions: React.PropTypes.object,
-  before: React.PropTypes.string,
-  data: React.PropTypes.object,
-  page: React.PropTypes.number.isRequired,
-  sort: React.PropTypes.string.isRequired,
-  subredditName: React.PropTypes.string,
-  subreddits: React.PropTypes.object,
-  time: React.PropTypes.string.isRequired,
-};
 
 export default SearchPage;

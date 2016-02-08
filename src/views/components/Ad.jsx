@@ -1,13 +1,18 @@
 import React from 'react';
-
-import constants from '../../constants';
 import { models } from 'snoode';
 import superagent from 'superagent';
 
+import constants from '../../constants';
 import BaseComponent from './BaseComponent';
 import Listing from './Listing';
 
 class Ad extends BaseComponent {
+  static propTypes = {
+    afterLoad: React.PropTypes.func.isRequired,
+    compact: React.PropTypes.bool.isRequired,
+    token: React.PropTypes.string,
+  };
+  
   constructor (props) {
     super(props);
 
@@ -26,17 +31,17 @@ class Ad extends BaseComponent {
       return true;
     }
 
-    var listing = this.refs.listing;
+    const listing = this.refs.listing;
 
     if (!listing) {
       return true;
     }
 
-    return listing.checkPos.apply(listing, arguments);
+    return listing.checkPos(...arguments);
   }
 
   getAd() {
-    var srnames = this.props.srnames;
+    let srnames = this.props.srnames;
     const specificAd = this.props.ctx.query.ad;
 
     if (specificAd) {
@@ -58,13 +63,11 @@ class Ad extends BaseComponent {
       srnames = ' reddit.com';
     }
 
-    var app = this.props.app;
-    var loggedIn = !!this.props.token;
-    var origin = (loggedIn ?
-      app.config.authAPIOrigin :
-        app.config.nonAuthAPIOrigin);
-    var headers = {};
-    var postData = {
+    const app = this.props.app;
+    const loggedIn = !!this.props.token;
+    const origin = (loggedIn ? app.config.authAPIOrigin : app.config.nonAuthAPIOrigin);
+    const headers = {};
+    const postData = {
       srnames,
       is_mobile_web: true,
       raw_json: '1',
@@ -72,7 +75,7 @@ class Ad extends BaseComponent {
 
     // If user is not logged in, send the loid in the promo request
     if (loggedIn) {
-      headers.authorization = 'bearer ' + this.props.token;
+      headers.authorization = `Bearer ${this.props.token}`;
     } else {
       postData.loid = this.props.loid;
     }
@@ -89,13 +92,13 @@ class Ad extends BaseComponent {
           }
 
           if (res && res.status === 200 && res.body) {
-            var link = res.body.data;
+            const link = res.body.data;
             link.url = link.href_url;
 
             return resolve(new models.Link(link).toJSON());
-          } else {
-            return reject(res);
           }
+
+          return reject(res);
         });
     });
   }
@@ -155,8 +158,8 @@ class Ad extends BaseComponent {
       if (middleIsAboveBottom && middleIsBelowTop) {
         const srcs=['imp_pixel', 'adserver_imp_pixel'];
 
-        for (var i = 0, iLen = srcs.length; i < iLen; i++) {
-          let pixel = new Image();
+        for (let i = 0, iLen = srcs.length; i < iLen; i++) {
+          const pixel = new Image();
           pixel.src = adObject[srcs[i]];
         }
 
@@ -170,8 +173,8 @@ class Ad extends BaseComponent {
       return null;
     }
 
-    var props = this.props;
-    var listing = Object.assign({}, this.state.ad, { compact: props.compact });
+    const props = this.props;
+    const listing = Object.assign({}, this.state.ad, { compact: props.compact });
 
     return (
       <Listing
@@ -185,11 +188,5 @@ class Ad extends BaseComponent {
     );
   }
 }
-
-Ad.propTypes = {
-  afterLoad: React.PropTypes.func.isRequired,
-  compact: React.PropTypes.bool.isRequired,
-  token: React.PropTypes.string,
-};
 
 export default Ad;

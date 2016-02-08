@@ -1,13 +1,12 @@
 import React from 'react';
+import has from 'lodash/object/has';
+import URL from 'url';
 
 import mobilify from '../../lib/mobilify';
 import propTypes from '../../propTypes';
-import has from 'lodash/object/has';
-import URL from 'url';
-const PropTypes = React.PropTypes;
-
 import BaseComponent from './BaseComponent';
 
+const PropTypes = React.PropTypes;
 const _gfyRegex = /https?:\/\/(?:.+)\.gfycat.com\/(.+)\.gif/;
 const _DEFAULT_ASPECT_RATIO = 16 / 9;
 
@@ -23,7 +22,7 @@ function _gifToHTML5(url) {
       poster: url.replace(/\.gif/, 'h.jpg'),
     };
   } else if (url.indexOf('gfycat') > 8) {
-    var gfy = _gfyRegex.exec(url);
+    const gfy = _gfyRegex.exec(url);
 
     if (gfy.length === 2) {
       return {
@@ -60,7 +59,7 @@ function incrRound (n, incr) {
 
 function _aspectRatioClass(ratio) {
   if (!ratio) {
-    return  'aspect-ratio-16x9';
+    return 'aspect-ratio-16x9';
   }
 
   const w = incrRound(ratio * _HEIGHT, _INCREMENT);
@@ -79,8 +78,8 @@ function _wrapSelftextExpand(fn) {
 }
 
 function _isPlayable(listing) {
-  let media = listing.media;
-  if (listing.url.indexOf('.gif') > -1 ||
+  const media = listing.media;
+  if (listing.url && listing.url.indexOf('.gif') > -1 ||
       (media && media.oembed && media.oembed.type !== 'image')
      ) {
     return true;
@@ -90,12 +89,29 @@ function _isPlayable(listing) {
 }
 
 function forceProtocol(url, https) {
-  let urlObj = URL.parse(url);
+  const urlObj = URL.parse(url);
   urlObj.protocol = https ? 'https:' : urlObj.protocol;
   return URL.format(urlObj);
 }
 
 class ListingContent extends BaseComponent {
+  static propTypes = {
+    compact: PropTypes.bool,
+    editError: PropTypes.arrayOf(PropTypes.string),
+    editing: PropTypes.bool,
+    expand: PropTypes.func.isRequired,
+    expanded: PropTypes.bool.isRequired,
+    expandedCompact: PropTypes.bool,
+    isThumbnail: PropTypes.bool,
+    listing: propTypes.listing.isRequired,
+    loaded: PropTypes.bool.isRequired,
+    saveUpdatedText: PropTypes.func,
+    single: PropTypes.bool,
+    tallestHeight: PropTypes.number.isRequired,
+    toggleEdit: PropTypes.func,
+    width: PropTypes.number.isRequired,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -117,27 +133,27 @@ class ListingContent extends BaseComponent {
       }
 
       return (
-        <div ref='all' className={ 'ListingContent' + (this._isCompact() ? ' compact' : '') }>
+        <div ref='all' className={ `ListingContent${(this._isCompact() ? ' compact' : '')}` }>
           { stalactiteNode }
           { contentNode }
         </div>
       );
 
-    } else {
-      return null;
     }
+
+    return null;
   }
 
   buildContent() {
-    let props = this.props;
-    let listing = props.listing;
+    const props = this.props;
+    const listing = props.listing;
 
-    let expanded = this._isExpanded();
-    let isNSFW = ListingContent.isNSFW(listing);
-    let isPlayable = _isPlayable(listing);
+    const expanded = this._isExpanded();
+    const isNSFW = ListingContent.isNSFW(listing);
+    const isPlayable = _isPlayable(listing);
 
-    let oembed = listing.media ? listing.media.oembed : null;
-    let url = mobilify(listing.url || listing.cleanPermalink);
+    const oembed = listing.media ? listing.media.oembed : null;
+    const url = mobilify(listing.url || listing.cleanPermalink);
 
     let preview;
     if (listing.preview || oembed) {
@@ -167,7 +183,7 @@ class ListingContent extends BaseComponent {
     }
 
     if (preview) {
-      let cb = isNSFW ? props.toggleShowNSFW : null;
+      const cb = isNSFW ? props.toggleShowNSFW : null;
       return this.buildImage(preview, url, cb);
     }
 
@@ -176,13 +192,13 @@ class ListingContent extends BaseComponent {
 
   buildImage(src, href, onClick, playable=false) {
     // this handles only direct links to gifs.
-    let html5 = _gifToHTML5(href);
+    const html5 = _gifToHTML5(href);
     if (this.state.playing && html5) {
       if (html5.iframe) {
         return this._renderIFrame(html5.iframe, _DEFAULT_ASPECT_RATIO);
-      } else {
-        return this._renderVideo({webm: html5.webm, mp4: html5.mp4}, html5.poster);
       }
+
+      return this._renderVideo({webm: html5.webm, mp4: html5.mp4}, html5.poster);
     }
 
     return this._renderImage(src, href, onClick, playable);
@@ -193,7 +209,7 @@ class ListingContent extends BaseComponent {
       <div
         ref='text'
         key={ id }
-        className={ 'ListingContent-text placeholder' + (collapsed ? ' collapsed' : '') }
+        className={ `ListingContent-text placeholder${(collapsed ? ' collapsed' : '')}` }
         onClick={ this.props.expand }
       />
     );
@@ -204,7 +220,7 @@ class ListingContent extends BaseComponent {
       <div
         ref='text'
         key={ id }
-        className={ 'ListingContent-text' + (collapsed ? ' collapsed' : '') }
+        className={ `ListingContent-text${(collapsed ? ' collapsed' : '')}` }
         dangerouslySetInnerHTML={ {__html: html} }
         onClick={ _wrapSelftextExpand(this.props.expand) }
       />
@@ -212,12 +228,12 @@ class ListingContent extends BaseComponent {
   }
 
   _renderImage(src, href, onClick, playable) {
-    let props = this.props;
+    const props = this.props;
 
-    let compact = this._isCompact();
-    let isNSFW = ListingContent.isNSFW(props.listing);
+    const compact = this._isCompact();
+    const isNSFW = ListingContent.isNSFW(props.listing);
 
-    let style = {};
+    const style = {};
 
     const config = this.props.app.config;
     const https = (config.https || config.httpsProxy);
@@ -228,7 +244,7 @@ class ListingContent extends BaseComponent {
     }
 
     if (src.url) {
-      style.backgroundImage = 'url(' + forceProtocol(src.url, https) + ')';
+      style.backgroundImage = `url("${forceProtocol(src.url, https)}")`;
     }
 
     let nsfwNode;
@@ -236,21 +252,22 @@ class ListingContent extends BaseComponent {
       nsfwNode = this._buildNSFW(props.compact);
     }
 
-    let aspectRatio = this._getAspectRatio(props.single, src.width, src.height);
+    const aspectRatio = this._getAspectRatio(props.single, src.width, src.height);
 
     if (props.single && aspectRatio) {
-      style.height = 1 / aspectRatio * props.width  + 'px';
+      const width = 1 / aspectRatio * props.width;
+      style.height = `${width}px`;
     }
 
     if (!onClick && compact) {
       onClick = props.expand;
     }
 
-    let noRoute = !!onClick;
+    const noRoute = !!onClick;
 
     if (src && src.url && !aspectRatio) {
       return (
-        <a  className='ListingContent-image'
+        <a className='ListingContent-image'
           href={ href }
           onClick={ onClick }
           data-no-route={ noRoute }
@@ -262,10 +279,17 @@ class ListingContent extends BaseComponent {
       );
     }
 
-    let showPlaceholder = isNSFW && !props.showNSFW && !src.url;
+    const showPlaceholder = isNSFW && !props.showNSFW && !src.url;
 
-    let linkClass = 'ListingContent-image ' + (props.isThumbnail ? '' :
-      _aspectRatioClass(aspectRatio)) + (showPlaceholder ? ' placeholder' : '');
+    let linkClass = 'ListingContent-image ';
+
+    if (!props.isThumbnail) {
+      linkClass += _aspectRatioClass(aspectRatio);
+
+      if (showPlaceholder) {
+        linkClass += ' placeholder';
+      }
+    }
 
     return (
       <a
@@ -282,21 +306,25 @@ class ListingContent extends BaseComponent {
   }
 
   _renderVideo(src, poster) {
-    let sources = [];
-    for (let i in src) {
-      sources.push(<source type={ 'video/' + i } src={ src[i] } key={ 'video-src' + i } />);
+    const sources = [];
+    let i;
+    for (i in src) {
+      sources.push(<source type={ `video/${i}` } src={ src[i] } key={ `video-src-${i}` } />);
     }
 
-    let props = this.props;
-    let aspectRatio = this._getAspectRatio(props.single, src.width, src.height) ||
+    const props = this.props;
+
+    const aspectRatio = this._getAspectRatio(props.single, src.width, src.height) ||
                       _DEFAULT_ASPECT_RATIO;
-    let style = {};
+
+    const style = {};
     if (props.single) {
-      style.height = 1 / aspectRatio * props.width  + 'px';
+      const height = 1 / aspectRatio * props.width;
+      style.height = `${height}px`;
     }
 
     return (
-      <div className={ 'ListingContent-video ' + _aspectRatioClass(aspectRatio) } style={ style }>
+      <div className={ `ListingContent-video ${_aspectRatioClass(aspectRatio)}` } style={ style }>
         <video
           className='ListingContent-videovideo'
           poster={ poster }
@@ -314,16 +342,18 @@ class ListingContent extends BaseComponent {
   }
 
   _renderIFrame(src, aspectRatio) {
-    let style = {};
+    const style = {};
 
     if (this.props.single && aspectRatio) {
-      style.height = 1 / aspectRatio * this.props.width + 'px';
+      const height = 1 / aspectRatio * this.props.width;
+      style.height = `${height}px`;
     }
 
-    let className = 'ListingContent-iframe ' + (aspectRatio ?
-      _aspectRatioClass(aspectRatio) : 'set-height');
+    const aspectRatioClass = (aspectRatio ? _aspectRatioClass(aspectRatio) : 'set-height');
+    const className = `ListingContent-iframe ${aspectRatioClass}`;
+
     return (
-      <div  className={ className } style={ style }>
+      <div className={ className } style={ style }>
         <iframe
           className='ListingContent-iframeiframe'
           width='100%'
@@ -340,22 +370,24 @@ class ListingContent extends BaseComponent {
   _renderHTML(content, aspectRatio) {
     return (
       <div
-        className={ 'ListingContent-html ' + _aspectRatioClass(aspectRatio) }
+        className={ `ListingContent-html ${_aspectRatioClass(aspectRatio)}` }
         dangerouslySetInnerHTML={ {__html: content} }
       />
     );
   }
 
   _renderPlaceholder(isNSFW) {
-    let props = this.props;
+    const props = this.props;
     let nsfwNode;
+
     if (isNSFW) {
       nsfwNode = this._buildNSFW(props.compact);
     }
+
     if (this._isCompact()) {
       return (
         <a
-          className={ 'ListingContent-image' + (props.loaded ? ' placeholder' : '') }
+          className={ `ListingContent-image${(props.loaded ? ' placeholder' : '')}` }
           href={ mobilify(props.listing.url) }
         >{ nsfwNode }</a>
       );
@@ -363,15 +395,16 @@ class ListingContent extends BaseComponent {
   }
 
   _renderEditText(text) {
-    let props = this.props;
+    const props = this.props;
     let errorClass = 'visually-hidden';
     let errorText = '';
 
     if (props.editError) {
-      let err = props.editError[0];
+      const err = props.editError[0];
       errorClass = 'alert alert-danger alert-bar';
-      errorText = err[0] + ': ' + err[1];
+      errorText = `${err[0]}: ${err[1]}`;
     }
+
     return (
       <div >
         <div className={ errorClass } role='alert'>
@@ -418,18 +451,18 @@ class ListingContent extends BaseComponent {
           <p className='ListingContent-nsfw-p'>NSFW</p>
         </div>
       );
-    } else {
-      return (
-        <div className='ListingContent-nsfw'>
-          <p className='ListingContent-nsfw-p'>This post is marked as NSFW</p>
-          <p className='ListingContent-nsfw-p outlined'>Show post?</p>
-        </div>
-      );
     }
+
+    return (
+      <div className='ListingContent-nsfw'>
+        <p className='ListingContent-nsfw-p'>This post is marked as NSFW</p>
+        <p className='ListingContent-nsfw-p outlined'>Show post?</p>
+      </div>
+    );
   }
 
   _buildMedia(listing, url, oembed) {
-    let aspectRatio = this._getAspectRatio(this.props.single,
+    const aspectRatio = this._getAspectRatio(this.props.single,
                         oembed.width, oembed.height) || _DEFAULT_ASPECT_RATIO;
 
     let media;
@@ -441,7 +474,7 @@ class ListingContent extends BaseComponent {
         media = this._renderHTML(listing.expandContent, aspectRatio);
         break;
       case 'rich':
-        let findSrc = oembed.html.match(/src="([^"]*)/);
+        const findSrc = oembed.html.match(/src="([^"]*)/);
         let frameUrl;
 
         if (findSrc && findSrc[1]) {
@@ -458,25 +491,22 @@ class ListingContent extends BaseComponent {
 
   _buildThumbnail(listing, expand, isNSFW, playable, preview) {
     if (listing.promoted && has(listing, 'preview.images.0.resolutions.0')) {
-      let url = listing.cleanUrl;
+      const url = listing.cleanUrl;
       return this._renderImage(preview, url, expand, playable);
-
     } else if (preview) {
       return this._renderImage(preview, listing.cleanUrl, expand, playable);
-
     } else if (listing.selftext) {
       return this._renderTextPlaceholder(listing.expandContent, true, listing.id);
-
-    } else {
-      return this._renderPlaceholder(isNSFW);
     }
+
+    return this._renderPlaceholder(isNSFW);
   }
 
   _previewImage(isNSFW, oembed, showNSFW) {
-    let { listing, width, tallestHeight } = this.props;
-    let compact = this._isCompact();
+    const { listing, width, tallestHeight } = this.props;
+    const compact = this._isCompact();
 
-    width = compact ? 80 : width;
+    const imageWidth = compact ? 80 : width;
 
     let preview = listing.preview;
 
@@ -493,20 +523,20 @@ class ListingContent extends BaseComponent {
         }
       }
 
-      let resolutions = preview.resolutions;
-      let source = preview.source;
+      const resolutions = preview.resolutions;
+      const source = preview.source;
 
       if (resolutions) {
-        let bestFit = resolutions
+        const bestFit = resolutions
           .sort((a, b) => {
             return a.width - b.width;
           })
           .find((r) => {
             if (compact) {
-              return r.width >= width && r.height >= tallestHeight;
-            } else {
-              return r.width >= width;
+              return r.width >= imageWidth && r.height >= tallestHeight;
             }
+
+            return r.width >= imageWidth;
           });
 
         if (bestFit) {
@@ -526,19 +556,19 @@ class ListingContent extends BaseComponent {
           width: oembed.thumbnail_width,
           height: oembed.thumbnail_height,
         };
-      } else {
-        return {};
       }
+
+      return {};
     }
   }
 
   _isExpanded() {
-    let { expanded, listing, single } = this.props;
+    const { expanded, listing, single } = this.props;
     return (single && !ListingContent.isNSFW(listing)) ? true : expanded;
   }
 
   _isCompact() {
-    let props = this.props;
+    const props = this.props;
     return props.compact && !props.expandedCompact;
   }
 
@@ -559,23 +589,6 @@ class ListingContent extends BaseComponent {
     }
 
     return listing.title.match(/nsf[wl]/gi) || listing.over_18;
-  }
-
-  static propTypes = {
-    compact: PropTypes.bool,
-    editError: PropTypes.arrayOf(PropTypes.string),
-    editing: PropTypes.bool,
-    expand: PropTypes.func.isRequired,
-    expanded: PropTypes.bool.isRequired,
-    expandedCompact: PropTypes.bool,
-    isThumbnail: PropTypes.bool,
-    listing: propTypes.listing.isRequired,
-    loaded: PropTypes.bool.isRequired,
-    saveUpdatedText: PropTypes.func,
-    single: PropTypes.bool,
-    tallestHeight: PropTypes.number.isRequired,
-    toggleEdit: PropTypes.func,
-    width: PropTypes.number.isRequired,
   }
 }
 

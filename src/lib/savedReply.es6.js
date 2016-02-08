@@ -1,5 +1,6 @@
+import localStorageAvailable from './localStorageAvailable';
 
-var _saved = null;
+let _saved = null;
 
 function set(thingId, reply) {
   reply = reply && reply.trim();
@@ -8,22 +9,24 @@ function set(thingId, reply) {
     return;
   }
 
-  var saved = {
+  const saved = {
     thingId,
     reply,
   };
 
-  global.localStorage.setItem('savedReply', JSON.stringify(saved));
+  if (localStorageAvailable()) {
+    global.localStorage.setItem('savedReply', JSON.stringify(saved));
+  }
   _saved = saved;
 }
 
 function get(thingId) {
-  var saved;
+  let saved = _saved;
 
   if (_saved) {
     saved = _saved;
-  } else {
-    var savedReply = global.localStorage.getItem('savedReply');
+  } else if (localStorageAvailable()) {
+    const savedReply = global.localStorage.getItem('savedReply');
 
     try {
       saved = JSON.parse(savedReply);
@@ -40,7 +43,9 @@ function get(thingId) {
 }
 
 function clear() {
-  global.localStorage.removeItem('savedReply');
+  if (localStorageAvailable()) {
+    global.localStorage.removeItem('savedReply');
+  }
   _saved = undefined;
 }
 

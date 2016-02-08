@@ -1,19 +1,21 @@
 import React from 'react';
 import LiveReload from '../components/LiveReload';
+import constants from '../../constants';
 
-function DefaultLayout  (props) {
-  const assetPath = props.config.assetPath;
-  const manifest = props.config.manifest;
+function DefaultLayout (props) {
+  const config = props.config;
+  const assetPath = config.assetPath;
+  const manifest = config.manifest;
 
-  let baseCSS = assetPath + '/css/';
-  let clientJS = assetPath + '/js/';
+  let baseCSS = `${assetPath}/css/`;
+  let clientJS = `${assetPath}/js/`;
 
   let liveReload;
-  if (props.config.liveReload) {
+  if (config.liveReload) {
     liveReload = (<LiveReload />);
   }
 
-  if (props.config.minifyAssets) {
+  if (config.minifyAssets) {
     baseCSS += manifest['base.css'];
     clientJS += manifest['client.min.js'];
   } else {
@@ -23,9 +25,9 @@ function DefaultLayout  (props) {
 
   let canonical;
 
-  if (props.config.url) {
+  if (config.url) {
     canonical = (
-      <link rel='canonical' href={ `${props.config.reddit}${props.ctx.url}` } />
+      <link rel='canonical' href={ `${config.reddit}${props.ctx.url}` } />
     );
   }
 
@@ -39,12 +41,12 @@ function DefaultLayout  (props) {
 
   let gaTracking;
 
-  if (props.config.googleAnalyticsId) {
-    let googleAnalyticsId = props.config.googleAnalyticsId;
+  if (config.googleAnalyticsId) {
+    const googleAnalyticsId = config.googleAnalyticsId;
 
-    let trackingCode = `
+    const trackingCode = `
       <script>
-      if (!navigator.doNotTrack) {
+      if (!window.DO_NOT_TRACK) {
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -62,24 +64,38 @@ function DefaultLayout  (props) {
   }
 
   let gtmTracking;
+  const subredditName = props.ctx.params.subreddit;
 
-  if (props.config.googleTagManagerId && props.config.mediaDomain) {
+  if (config.googleTagManagerId && config.mediaDomain) {
     const gtmCode = `
       <script>
-        if (!navigator.doNotTrack) {
+        if (!window.DO_NOT_TRACK) {
           var frame = document.createElement('iframe');
+
           frame.style.display = 'none';
           frame.referrer = 'no-referrer';
           frame.id = 'gtm-jail';
-          frame.src = '//${props.config.mediaDomain}/gtm/jail?id=${props.config.googleTagManagerId}';
+          frame.name = JSON.stringify({
+            subreddit: '${subredditName || ''}',
+            origin: location.origin,
+          });
+          frame.src = '//${config.mediaDomain}/gtm/jail?id=${config.googleTagManagerId}';
           document.body.appendChild(frame);
         }
       </script>
     `;
 
     gtmTracking = (
-      <div dangerouslySetInnerHTML={{ __html: gtmCode }} />
+      <div dangerouslySetInnerHTML={ { __html: gtmCode } } />
     );
+  }
+
+  let keyColor = constants.DEFAULT_KEY_COLOR;
+
+  if (props.dataCache &&
+      props.dataCache.subreddit &&
+      props.dataCache.subreddit.key_color) {
+    keyColor = props.dataCache.subreddit.key_color;
   }
 
   return (
@@ -93,7 +109,7 @@ function DefaultLayout  (props) {
           name='viewport'
           content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
         />
-        <meta name='theme-color' content='#336699' />
+        <meta name='theme-color' content={ keyColor } />
         <meta name='apple-mobile-web-app-capable' content='yes' />
         <meta id='csrf-token-meta-tag' name='csrf-token' content={ props.ctx.csrf } />
         { metaDescription }
@@ -120,7 +136,6 @@ function DefaultLayout  (props) {
   );
 }
 
-//TODO: someone more familiar with this component could eventually fill this out better
 DefaultLayout.propTypes = {
   metaDescription: React.PropTypes.string,
   title: React.PropTypes.string.isRequired,

@@ -4,7 +4,6 @@ import cookies from 'cookies-js';
 import { find as _find, filter as _filter } from 'lodash/collection';
 
 import BaseComponent from './BaseComponent';
-
 import constants from '../../constants';
 
 const PropTypes = React.PropTypes;
@@ -13,7 +12,15 @@ const EU_COOKIE_MESSAGE = 'Cookies help us deliver our Services. By ' +
   'using our Services, you agree to our use of cookies. ' +
   '[Learn More](https://www.reddit.com/help/privacypolicy)';
 
+let InfoBarEUCookieFirstShow = true;
+
 class InfoBar extends BaseComponent {
+  static propTypes = {
+    messages: PropTypes.array.isRequired,
+    app: PropTypes.object.isRequired,
+    showEUCookieMessage: PropTypes.bool.isRequired,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -34,7 +41,10 @@ class InfoBar extends BaseComponent {
 
     if (hasEUCookie) {
       app.on('route:start', this.incrementCookieNoticeSeen);
-      this.incrementCookieNoticeSeen();
+      if (InfoBarEUCookieFirstShow) {
+        this.incrementCookieNoticeSeen();
+        InfoBarEUCookieFirstShow = false;
+      }
     }
   }
 
@@ -51,9 +61,9 @@ class InfoBar extends BaseComponent {
   incrementCookieNoticeSeen(e, num=1) {
     const { app } = this.props;
     const oldCookie = parseInt(cookies.get('EUCookieNotice')) || 0;
-    let options = {};
+    const options = {};
 
-    let date = new Date();
+    const date = new Date();
     date.setFullYear(date.getFullYear() + 2);
     options.expires = date;
 
@@ -86,14 +96,14 @@ class InfoBar extends BaseComponent {
   }
 
   handleNewMessage(message) {
-    let messages = this.state.messages.slice();
+    const messages = this.state.messages.slice();
     messages.push(message);
     this.setState({ messages });
   }
 
   close() {
     const { app } = this.props;
-    let message = this.state.messages[0];
+    const message = this.state.messages[0];
 
     if (message.type === constants.messageTypes.GLOBAL) {
       app.emit(constants.HIDE_GLOBAL_MESSAGE, message);
@@ -101,7 +111,7 @@ class InfoBar extends BaseComponent {
       this.incrementCookieNoticeSeen(null, constants.EU_COOKIE_HIDE_AFTER_VIEWS);
     }
 
-    let messages = this.state.messages.slice(1);
+    const messages = this.state.messages.slice(1);
     this.setState({ messages });
   }
 
@@ -142,17 +152,11 @@ class InfoBar extends BaseComponent {
           </article>
         </div>
       );
-    } else {
-      return (
-        <div className='infobar-placeholder'></div>
-      );
     }
-  }
 
-  static propTypes = {
-    messages: PropTypes.array.isRequired,
-    app: PropTypes.object.isRequired,
-    showEUCookieMessage: PropTypes.bool.isRequired,
+    return (
+      <div className='infobar-placeholder'></div>
+    );
   }
 }
 

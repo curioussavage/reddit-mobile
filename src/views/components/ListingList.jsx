@@ -1,7 +1,8 @@
 import React from 'react';
+import uniq from 'lodash/array/uniq';
+
 import constants from '../../constants';
 import propTypes from '../../propTypes';
-import uniq from 'lodash/array/uniq';
 
 import Ad from '../components/Ad';
 import BaseComponent from './BaseComponent';
@@ -13,6 +14,17 @@ const Proptypes = React.PropTypes;
 const _AD_LOCATION = 11;
 
 class ListingList extends BaseComponent {
+  static propTypes = {
+    compact: Proptypes.bool,
+    firstPage: Proptypes.number,
+    listings: Proptypes.arrayOf(Proptypes.oneOfType([
+      propTypes.comment,
+      propTypes.listing,
+    ])).isRequired,
+    showAds: Proptypes.bool,
+    showHidden: Proptypes.bool,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -38,7 +50,7 @@ class ListingList extends BaseComponent {
   }
 
   _checkAdPos() {
-    var loadedDistance = this._getLoadedDistance();
+    const loadedDistance = this._getLoadedDistance();
 
     if (!this.refs.ad) {
       return true;
@@ -56,11 +68,12 @@ class ListingList extends BaseComponent {
   }
 
   _lazyLoad() {
-    var listings = this.props.listings;
-    var loadedDistance = this._getLoadedDistance();
+    const listings = this.props.listings;
+    const loadedDistance = this._getLoadedDistance();
 
-    for (var i = 0; i < listings.length; i++) {
-      var listing = this.refs['listing' + i];
+    let i;
+    for (i = 0; i < listings.length; i++) {
+      const listing = this.refs[`listing${i}`];
 
       // commentpreviews are stateless, so the ref won't exist.
       if (!listing) {
@@ -103,7 +116,7 @@ class ListingList extends BaseComponent {
   }
 
   buildAd() {
-    var srnames = uniq(this.props.listings.map(function(l) {
+    const srnames = uniq(this.props.listings.map(function(l) {
       return l.subreddit;
     }));
 
@@ -121,37 +134,38 @@ class ListingList extends BaseComponent {
   }
 
   render() {
-    var props = this.props;
-    var page = props.firstPage || 0;
-    var length = props.listings.length;
-    var compact = this.state.compact;
-    var listings = (
-      props.listings.map(function(listing, i) {
+    const props = this.props;
+    const page = props.firstPage || 0;
+    const length = props.listings.length;
+    const compact = this.state.compact;
 
-        var index = (page * 25) + i;
+    const listings = (
+      props.listings.map(function(listing, i) {
+        const index = (page * 25) + i;
+
         if (listing._type === 'Comment') {
           return (
             <CommentPreview
               comment={ listing }
-              key={ 'page-comment-' + index }
+              key={ `page-comment-${index}` }
               page={ page }
             />
           );
-        } else {
-          if (props.showHidden || !listing.hidden) {
-            return (
-              <Listing
-                index={ index }
-                key={ 'page-listing-' + index }
-                listing={ listing }
-                ref={ 'listing' + i }
-                z={ length - i }
-                subredditIsNSFW={ props.subredditIsNSFW }
-                {...props}
-                compact={ compact }
-              />
-            );
-          }
+        }
+
+        if (props.showHidden || !listing.hidden) {
+          return (
+            <Listing
+              index={ index }
+              key={ `page-listing-${index}` }
+              listing={ listing }
+              ref={ `listing${i}` }
+              z={ length - i }
+              subredditIsNSFW={ props.subredditIsNSFW }
+              {...props}
+              compact={ compact }
+            />
+          );
         }
       })
     );
@@ -176,21 +190,10 @@ class ListingList extends BaseComponent {
   }
 
   componentWillReceiveProps(nextProps) {
-    var compact = nextProps.compact;
-    if (compact !== 'undefined' && compact !==this.state.compact) {
+    const compact = nextProps.compact;
+    if (compact !== 'undefined' && compact !== this.state.compact) {
       this.setState({compact});
     }
-  }
-
-  static propTypes = {
-    compact: Proptypes.bool,
-    firstPage: Proptypes.number,
-    listings: Proptypes.arrayOf(Proptypes.oneOfType([
-      propTypes.comment,
-      propTypes.listing,
-    ])).isRequired,
-    showAds: Proptypes.bool,
-    showHidden: Proptypes.bool,
   }
 }
 

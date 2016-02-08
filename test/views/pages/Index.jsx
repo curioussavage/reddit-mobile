@@ -1,21 +1,22 @@
+/*eslint no-unused-expressions: 0 */
 import chai from 'chai';
-import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
-import TestUtils from 'react-addons-test-utils';
 
 import shallowHelpers from 'react-shallow-renderer-helpers';
 import renderWithProps from '../../helpers/renderWithProps';
 
-import { IndexPage, Loading, TopSubNav, ListingContainer } from '../../helpers/components';
+import { IndexPage, Loading, ListingContainer } from '../../helpers/components';
 
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(sinonChai);
 
 describe('index page', () => {
-  var ctx;
+  let ctx;
 
   beforeEach('render and find element', () => {
-    ctx = renderWithProps({}, IndexPage);
+    ctx = renderWithProps({
+      ctx: { query: {} },
+    }, IndexPage);
   });
 
   it('is a thing', () => {
@@ -28,21 +29,61 @@ describe('index page', () => {
 
   describe('With data', () => {
     beforeEach('render and find element', () => {
-
       ctx.instance.setState({
         data: {
-          listings: []
-        }
+          listings: [{ }],
+        },
       });
       ctx.result = ctx.renderer.getRenderOutput();
     });
 
     it('renders a ListingList copmonent when listings are loaded', () => {
-      let listingContainer = shallowHelpers.findType(ctx.result, ListingContainer);
+      const listingContainer = shallowHelpers.findType(ctx.result, ListingContainer);
       expect(listingContainer).to.not.equal(undefined);
-    })
-
+    });
   });
 
+  describe('Static methods', () => {
+    describe('next/prev listings staleness', function() {
+      it('before query with no before/after in response headers is stale', function() {
+        const query = { before: 't3_abcd' };
+        const listings = { body: [], headers: { }};
+
+        expect(IndexPage.isStalePage(query, listings)).to.be.true;
+      });
+
+      it('after query with no before/after in response headers is stale', function() {
+        const query = { after: 't3_abcd' };
+        const listings = { body: [], headers: { }};
+
+        expect(IndexPage.isStalePage(query, listings)).to.be.true;
+      });
+
+      it('after query with before in response headers with no listings is not stale', function() {
+        const query = { after: 't3_abcd' };
+        const listings = { body: [], headers: { before: 't3_efgh' }};
+
+        expect(IndexPage.isStalePage(query, listings)).to.not.be.true;
+      });
+    });
+
+    describe('next/prev listings stale redirect url', function() {
+      it('returns a path without before, after, or page', function() {
+        const path = '/r/science';
+        const query = { before: 't3_abcd', after: 't3_efgh', page: 2 };
+
+        const redirect = IndexPage.stalePageRedirectUrl(path, query);
+        expect(redirect).to.equal('/r/science');
+      });
+
+      it('maintains non-paging querystrings', function() {
+        const path = '/r/science';
+        const query = { sort: 'hot', after: 't3_efgh', page: 2 };
+
+        const redirect = IndexPage.stalePageRedirectUrl(path, query);
+        expect(redirect).to.equal('/r/science?sort=hot');
+      });
+    });
+  });
 });
 

@@ -1,22 +1,63 @@
 import React from 'react';
 
-let { array, string, number, bool, shape, oneOfType, arrayOf } = React.PropTypes;
+const {
+  array,
+  string,
+  number,
+  bool,
+  shape,
+  oneOfType,
+  arrayOf,
+} = React.PropTypes;
 
-var _listingSource = shape({
+const _listingSource = shape({
   url: string.isRequired,
 });
 
-var _listingResolutions = arrayOf(shape({
+const _listingResolutions = arrayOf(shape({
   width: number.isRequired,
   height: number.isRequired,
   url: string.isRequired,
 }));
 
-var _listingVariants = shape({
+const _listingVariants = shape({
   nsfw: shape({
     resolutions: _listingResolutions.isRequired,
     source: _listingSource,
   }),
+});
+
+const _subreddit = shape({
+  id: string,
+  name: string,
+  display_name: string,
+  subscribers: number,
+  accounts_active: number,
+  lang: string,
+  over18: bool,
+
+  banner_img: string,
+  banner_size: arrayOf(number),
+
+  user_is_banned: bool,
+  user_is_contributor: bool,
+  user_is_subscriber: bool,
+  user_is_moderator: bool,
+  submit_text: string,
+  submission_type: string,
+
+  collapse_deleted_comments: bool,
+  comment_score_hide_mins: number,
+  community_rules: arrayOf(shape({})),
+  hide_ads: bool,
+  icon_img: string,
+  icon_size: arrayOf(number),
+  key_color: string,
+
+  public_description: string,
+  public_traffic: bool,
+  quarantine: bool,
+  related_subreddits: arrayOf(_subreddit),
 });
 
 export default {
@@ -117,4 +158,6 @@ export default {
     link_karma: number.isRequired,
     name: string.isRequired,
   }),
+
+  subreddit: _subreddit,
 };

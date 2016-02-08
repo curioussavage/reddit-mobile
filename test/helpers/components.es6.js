@@ -3,10 +3,13 @@
 import Ad from '../../src/views/components/Ad';
 import BaseComponent from '../../src/views/components/BaseComponent';
 import CaptchaBox from '../../src/views/components/CaptchaBox';
-import Comment from '../../src/views/components/Comment';
-import CommentBox from '../../src/views/components/CommentBox';
+import Comment from '../../src/views/components/comment/Comment';
 import CommentPreview from '../../src/views/components/CommentPreview';
+import CommunityHeader from '../../src/views/components/CommunityHeader';
+import CommunityOverlayMenu from '../../src/views/components/CommunityOverlayMenu';
+import CommunitySearchRow from '../../src/views/components/CommunitySearchRow';
 import Dropdown from '../../src/views/components/Dropdown';
+import DropdownController from '../../src/views/components/dropdown/DropdownController';
 import GoogleCarouselMetadata from '../../src/views/components/GoogleCarouselMetadata';
 import Inbox from '../../src/views/components/Inbox';
 import Listing from '../../src/views/components/Listing';
@@ -19,18 +22,20 @@ import Loading from '../../src/views/components/Loading';
 import MessageNav from '../../src/views/components/MessageNav';
 import MessagePreview from '../../src/views/components/MessagePreview';
 import Modal from '../../src/views/components/Modal';
+import OverlayMenu from '../../src/views/components/OverlayMenu';
+import OverlayMenuRow from '../../src/views/components/OverlayMenuRow';
 import ReportPlaceholder from '../../src/views/components/ReportPlaceholder';
 import SearchBar from '../../src/views/components/SearchBar';
 import SearchSortSubnav from '../../src/views/components/SearchSortSubnav';
 import SeashellsDropdown from '../../src/views/components/SeashellsDropdown';
-import SideNav from '../../src/views/components/SideNav';
 import SortDropdown from '../../src/views/components/SortDropdown';
 import SubredditSelectionButton from '../../src/views/components/SubredditSelectionButton';
 import SVG from '../../src/views/components/SVG';
 import TextSubNav from '../../src/views/components/TextSubNav';
 import TopNav from '../../src/views/components/TopNav';
-import TopSubNav from '../../src/views/components/TopSubNav';
+import TopSubnav from '../../src/views/components/TopSubnav';
 import UserActivitySubnav from '../../src/views/components/UserActivitySubnav';
+import UserOverlayMenu from '../../src/views/components/UserOverlayMenu';
 import UserProfile from '../../src/views/components/UserProfile';
 import Vote from '../../src/views/components/Vote';
 
@@ -62,10 +67,13 @@ export {
     BaseComponent,
     CaptchaBox,
     Comment,
-    CommentBox,
     CommentPreview,
     Comment,
+    CommunityHeader,
+    CommunityOverlayMenu,
+    CommunitySearchRow,
     Dropdown,
+    DropdownController,
     GoogleCarouselMetadata,
     Inbox,
     Listing,
@@ -78,18 +86,20 @@ export {
     MessageNav,
     MessagePreview,
     Modal,
+    OverlayMenu,
+    OverlayMenuRow,
     ReportPlaceholder,
     SearchBar,
     SearchSortSubnav,
     SeashellsDropdown,
-    SideNav,
     SortDropdown,
     SubredditSelectionButton,
     SVG,
     TextSubNav,
     TopNav,
-    TopSubNav,
+    TopSubnav,
     UserActivitySubnav,
+    UserOverlayMenu,
     UserProfile,
     Vote,
 

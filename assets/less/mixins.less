@@ -1,7 +1,7 @@
 @import "../../lib/snooboots/less/mixins/vendor-prefixes.less";
 
 .shadow {
-  box-shadow: 0 0 5px 0 rgba(0,0,0,0.1);
+  box-shadow: 0 0 5px 0 rgba(0,0,0,0.2);
 }
 
 .bottomShadow {
@@ -24,6 +24,14 @@
       -ms-transform-origin: @output;
        -o-transform-origin: @output;
           transform-origin: @output;
+}
+
+.linear-gradient-background(@deg, @from, @to) {
+  background-color: @to;
+  background-image: -webkit-linear-gradient(@deg, @from, @to);
+  background-image:    -moz-linear-gradient(@deg, @from, @to);
+  background-image:      -o-linear-gradient(@deg, @from, @to);
+  background-image:         linear-gradient(@deg, @from, @to);
 }
 
 .icon-font(@rules) {
@@ -67,4 +75,8 @@
 
 .visually-hidden {
   display: none;
+}
+
+.bold {
+  font-weight: bold;
 }

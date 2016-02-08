@@ -13,18 +13,28 @@ function _removeNewLines(title) {
 }
 
 function _determineKind(body) {
-  var words = body.trim(' ').split(' ');
-  var hasProtocol = /^(http|https):\/\/[^ "]+$/.test(words[0]);
+  const words = body.trim(' ').split(' ');
+  const hasProtocol = /^(http|https):\/\/[^ "]+$/.test(words[0]);
+
   if (words.length === 1 && hasProtocol) {
     return 'link';
-  } else {
-    return 'self';
   }
+
+  return 'self';
 }
 
-var debouncedDetermineKind = throttle(_determineKind, 1000);
+const debouncedDetermineKind = throttle(_determineKind, 1000);
 
 class SubmitPage extends BasePage {
+  static propTypes = {
+    // apiOptions: React.PropTypes.object,
+    kind: React.PropTypes.string,
+    resubmit: React.PropTypes.bool,
+    subredditName: React.PropTypes.string,
+    thingId: React.PropTypes.string,
+    type: React.PropTypes.string,
+  };
+
   constructor(props) {
     super(props);
 
@@ -60,9 +70,14 @@ class SubmitPage extends BasePage {
   componentDidMount () {
     super.componentDidMount();
 
-    var saved = global.localStorage.getItem('savedLinkContent');
+    if (!this.props.app.config.localStorageAvailable) {
+      return;
+    }
+
+    const saved = global.localStorage.getItem('savedLinkContent');
+
     if (saved) {
-      var parsed = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
       this.setState(parsed);
       global.localStorage.clear();
     }
@@ -104,7 +119,7 @@ class SubmitPage extends BasePage {
   }
 
   _validateContent (sub, title) {
-    var errors = [];
+    const errors = [];
     if (sub === '' || sub === 'choose a subreddit') {
       errors.push('subreddit');
     }
@@ -115,7 +130,7 @@ class SubmitPage extends BasePage {
   }
 
   _submitPost (thingId, body, title, kind) {
-    var newLink = {
+    const newLink = {
       title,
       kind,
       sr: this.state.subreddit,
@@ -134,18 +149,18 @@ class SubmitPage extends BasePage {
       newLink.url = '';
     }
 
-    var link = new models.Link(newLink);
-    var options = this.props.app.api.buildOptions(this.props.apiOptions);
+    const link = new models.Link(newLink);
 
-    options = Object.assign(options, {
+    const options = {
+      ...this.props.app.api.buildOptions(this.props.apiOptions),
       model: link,
-    });
+    };
 
-    var deferred = this.props.app.api.links.post(options);
+    const deferred = this.props.app.api.links.post(options);
 
     deferred.then(function(res) {
       if (res && res.url) {
-        var url = res.url.replace(/^https?:\/\/(?:www\.)?reddit.com/, '');
+        const url = res.url.replace(/^https?:\/\/(?:www\.)?reddit.com/, '');
 
         this.props.app.redirect(url);
         this.props.app.emit('post:submit', link.sr);
@@ -161,9 +176,8 @@ class SubmitPage extends BasePage {
 
   _handleApiErrors (err) {
     if (Array.isArray(err.errors)) {
-      let currentError = err.errors[0];
-      let type = currentError[0];
-      let message = currentError[1];
+      const currentError = err.errors[0];
+      const [type,message] = currentError;
 
       if (type === 'BAD_CAPTCHA') {
         this.setState({
@@ -198,7 +212,7 @@ class SubmitPage extends BasePage {
   }
 
   handleChange (type, e) {
-    var newState = {};
+    const newState = {};
     newState[type] = e.target.value;
 
     if (type === 'body') {
@@ -213,8 +227,8 @@ class SubmitPage extends BasePage {
   }
 
   close () {
-    let { subredditName, app } = this.props;
-    let path = subredditName ? `/r/${subredditName}` : '/';
+    const { subredditName, app } = this.props;
+    const path = subredditName ? `/r/${subredditName}` : '/';
     app.redirect(path);
   }
 
@@ -229,39 +243,43 @@ class SubmitPage extends BasePage {
     const { app } = this.props;
 
     if (subName) {
-      var content = {
+      const content = {
         title: this.state.title,
         body: this.state.body,
         sendReplies: this.state.sendReplies,
         subreddit: this.state.subreddit,
       };
 
-      global.localStorage.setItem('savedLinkContent', JSON.stringify(content));
-      var url = '/r/' + subName + '/about';
+      if (this.props.app.localStorageAvailable) {
+        global.localStorage.setItem('savedLinkContent', JSON.stringify(content));
+      }
 
+      const url = `/r/${subName}/about`;
       app.redirect(url);
     }
   }
 
   render () {
-    var props = this.props;
-    var subredditName = this.state.subreddit;
+    const props = this.props;
+    const subredditName = this.state.subreddit;
 
-    var type = this.state.kind || 'link';
-    var typeLable = '';
+    const type = this.state.kind || 'link';
+
+    let typeLabel = '';
     if (this.state.kind) {
-      typeLable = (this.state.kind === 'self') ? 'text ' : 'link ';
+      typeLabel = (this.state.kind === 'self') ? 'text ' : 'link ';
     }
 
-    var classes = {
+    const classes = {
       body: '',
       title: '',
       subreddit: '',
     };
 
-    var errorClass = 'visually-hidden';
-    var errorText = '';
-    var error = this.state.error;
+    const error = this.state.error;
+    let errorClass = 'visually-hidden';
+    let errorText = '';
+
     if (error.type && error.type !== 'BAD_CAPTCHA') {
       switch (this.state.error.type) {
         // for errors on specfic fields
@@ -275,12 +293,12 @@ class SubmitPage extends BasePage {
           });
           break;
       }
-      errorText = error.type + ' ' + error.message;
+      errorText = `${error.type} ${error.message}`;
       errorClass = 'row alert alert-danger alert-bar Submit-alert-bar';
     }
 
-    var captcha;
-    var showCaptchaError = (this.state.captchaCount > 1 &&
+    let captcha;
+    const showCaptchaError = (this.state.captchaCount > 1 &&
                             error.type === 'BAD_CAPTCHA');
 
     if (this.state.requiresCaptcha) {
@@ -302,8 +320,10 @@ class SubmitPage extends BasePage {
       );
     }
 
-    var iconClass = this.state.sendReplies ? 'icon-check-shown' : 'icon-check-hidden';
-    var postForm;
+    const iconClass = this.state.sendReplies ? 'icon-check-shown' : 'icon-check-hidden';
+
+    let postForm;
+
     if (!this.state.subredditSelectionOpen) {
       postForm = (
         <div className='Submit-main-form-wrap'>
@@ -312,7 +332,7 @@ class SubmitPage extends BasePage {
               <button type='button' className='close pull-left' onClick={ this.close }>
                 <span className='Submit-close' aria-hidden='true'>&times;</span>
               </button>
-              <span className='Submit-header-text'>{ 'Create a new ' + typeLable + 'post' }</span>
+              <span className='Submit-header-text'>{ `Create a new ${typeLabel}post` }</span>
               <button
                 className='pull-right btn btn-primary submit-send-btn'
                 type='submit'
@@ -325,7 +345,7 @@ class SubmitPage extends BasePage {
               { errorText }
             </div>
           </div>
-            <div className={ 'Submit-title ' + classes.title }>
+            <div className={ `Submit-title ${classes.title}` }>
               <div className='Submit-centered'>
                 <textarea
                   className='form-control full-screen-textarea'
@@ -338,7 +358,7 @@ class SubmitPage extends BasePage {
                 ></textarea>
               </div>
             </div>
-            <div className={ 'Submit-body Submit-centered ' + classes.body }>
+            <div className={ `Submit-body Submit-centered ${classes.body}` }>
               <div className='Submit-body-holder'>
                 <textarea
                   className='form-control Submit-body-text zoom-fix'
@@ -363,7 +383,7 @@ class SubmitPage extends BasePage {
                     onClick={ this.changeSendReplies }
                   >
                     <span >
-                      <span className={ 'icon-check ' + iconClass }>{ ' ' }</span>
+                      <span className={ `icon-check ${iconClass}` }>{ ' ' }</span>
                        send replies to my inbox
                     </span>
                   </button>
@@ -394,15 +414,5 @@ class SubmitPage extends BasePage {
     );
   }
 }
-
-//TODO: someone more familiar with this component could eventually fill this out better
-SubmitPage.propTypes = {
-  // apiOptions: React.PropTypes.object,
-  kind: React.PropTypes.string,
-  resubmit: React.PropTypes.bool,
-  subredditName: React.PropTypes.string,
-  thingId: React.PropTypes.string,
-  type: React.PropTypes.string,
-};
 
 export default SubmitPage;

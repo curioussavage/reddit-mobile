@@ -1,11 +1,20 @@
 import React from 'react';
 import { models } from 'snoode';
+
 import constants from '../../constants';
 import propTypes from '../../propTypes';
 
 import BaseComponent from '../components/BaseComponent';
 
 class Vote extends BaseComponent {
+  static propTypes = {
+    setScore: React.PropTypes.func,
+    thing: React.PropTypes.oneOfType([
+      propTypes.comment,
+      propTypes.listing,
+    ]).isRequired,
+  };
+
   constructor(props) {
     super(props);
 
@@ -13,7 +22,7 @@ class Vote extends BaseComponent {
       score: props.thing.score,
     };
 
-    var likes = props.thing.likes;
+    const likes = props.thing.likes;
 
     if (likes === false) {
       this.state.localScore = -1;
@@ -29,29 +38,29 @@ class Vote extends BaseComponent {
   }
 
   componentDidMount() {
-    this.props.app.on(constants.VOTE + ':' + this.props.thing.id, this._onVote);
+    this.props.app.on(`${constants.VOTE}:${this.props.thing.id}`, this._onVote);
   }
 
   componentWillUnmount() {
-    this.props.app.off(constants.VOTE + ':' + this.props.thing.id, this._onVote);
+    this.props.app.off(`${constants.VOTE}:${this.props.thing.id}`, this._onVote);
   }
 
   _onClick(str, evt) {
     switch (str) {
       case 'upvote':
         evt.preventDefault();
-        this.props.app.emit(constants.VOTE+':'+this.props.thing.id, 1);
+        this.props.app.emit(`${constants.VOTE}:${this.props.thing.id}`, 1);
         break;
       case 'downvote':
         evt.preventDefault();
-        this.props.app.emit(constants.VOTE+':'+this.props.thing.id, -1);
+        this.props.app.emit(`${constants.VOTE}:${this.props.thing.id}`, -1);
         break;
     }
   }
 
   _getScore(dir) {
-    var diff;
-    var localScore;
+    let diff;
+    let localScore;
 
     if (this.state.localScore === dir) {
       diff = dir * -1;
@@ -61,13 +70,13 @@ class Vote extends BaseComponent {
       localScore = dir;
     }
 
-    var newScore = this.state.score + diff;
+    const newScore = this.state.score + diff;
     return [newScore, localScore];
   }
 
   _onVote(dir) {
     if (this.submitVote(dir)) {
-      var [newScore, localScore] = this._getScore(dir);
+      const [newScore, localScore] = this._getScore(dir);
 
       this.setState({
         localScore,
@@ -81,21 +90,18 @@ class Vote extends BaseComponent {
   }
 
   submitVote(direction) {
-    if (!this.props.token) {
-      window.location = this.props.app.config.loginPath;
-      return;
-    }
+    if (this.props.app.needsToLogInUser()) { return; }
 
     if (this.state.localScore === direction) {
       direction = 0;
     }
 
-    var vote = new models.Vote({
+    const vote = new models.Vote({
       direction: parseInt(direction),
       id: this.props.thing.name,
     });
 
-    var options = this.props.app.api.buildOptions(this.props.apiOptions);
+    let options = this.props.app.api.buildOptions(this.props.apiOptions);
 
     options = Object.assign(options, {
       model: vote,
@@ -110,78 +116,92 @@ class Vote extends BaseComponent {
     return true;
   }
 
-  render() {
-    var voteClass = '';
+  get voteClass() {
+    let voteClass = '';
     if (this.state.localScore > 0) {
       voteClass = ' upvoted';
     } else if (this.state.localScore < 0) {
       voteClass = ' downvoted';
     }
+    return voteClass;
+  }
 
+  renderUpvote() {
+    const { thing } = this.props;
+    return (
+      <li>
+        <form
+          className='vote-form'
+          action={ `/vote/${thing.name}` }
+          method='post'
+        >
+          <input type='hidden' name='direction' value='1'/>
+          <button
+            type='submit'
+            className={ `vote text-muted ${this.voteClass}` }
+            data-vote='up'
+            data-thingid={ thing.name }
+            data-no-route='true'
+            onClick={ this.upvote }
+          >
+            <span className='icon-upvote-circled'/>
+          </button>
+        </form>
+      </li>
+    );
+  }
+
+  renderDownvote() {
+    const { thing } = this.props;
+    return (
+      <li>
+        <form
+          className='vote-form'
+          action={ `/vote/${thing.name}` }
+          method='post'
+        >
+          <input type='hidden' name='direction' value='-1'/>
+          <button
+            type='submit'
+            className={ `vote text-muted ${this.voteClass}` }
+            data-vote='down'
+            data-thingid={ thing.name }
+            data-no-route='true'
+            onClick={ this.downvote }
+          >
+            <span className='icon-downvote-circled'/>
+          </button>
+        </form>
+      </li>
+    );
+  }
+
+  renderVoteCount() {
     const { thing } = this.props;
     const score = thing.hide_score || thing.score_hidden ? '●' : this.state.score;
 
     return (
-        <ul className='linkbar linkbar-compact'>
-          <li>
-            <form
-              className='vote-form'
-              action={ '/vote/'+ thing.name }
-              method='post'
-            >
-              <input type='hidden' name='direction' value='1'/>
-              <button
-                type='submit'
-                className={ 'vote text-muted ' + (voteClass || '') }
-                data-vote='up'
-                data-thingid={ thing.name }
-                data-no-route='true'
-                onClick={ this.upvote }
-              >
-                <span className='icon-upvote-circled'></span>
-              </button>
-            </form>
-          </li>
-          <li className='vote-score-container'>
-            <span
-              className='vote-score'
-              data-vote-score={ this.state.score }
-              data-thingid={ this.props.thing.name }
-            >
-              { score }
-            </span>
-          </li>
-          <li>
-            <form
-              className='vote-form'
-              action={ '/vote/'+ thing.name }
-              method='post'
-            >
-              <input type='hidden' name='direction' value='-1'/>
-              <button
-                type='submit'
-                className={ 'vote text-muted ' + (voteClass || '') }
-                data-vote='down'
-                data-thingid={ thing.name }
-                data-no-route='true'
-                onClick={ this.downvote }
-              >
-                <span className='icon-downvote-circled'></span>
-              </button>
-            </form>
-          </li>
-        </ul>
+      <li className='vote-score-container'>
+        <span
+          className='vote-score'
+          data-vote-score={ this.state.score }
+          data-thingid={ this.props.thing.name }
+        >
+          { score }
+        </span>
+      </li>
+    );
+  }
+
+  render() {
+    return (
+      <ul className='linkbar linkbar-compact'>
+        { this.renderUpvote() }
+        { this.renderVoteCount() }
+        { this.renderDownvote() }
+      </ul>
     );
   }
 }
-
-Vote.propTypes = {
-  // apiOptions: React.PropTypes.object,
-  setScore: React.PropTypes.func,
-  thing: React.PropTypes.oneOfType([
-    propTypes.comment,
-    propTypes.listing,
-  ]).isRequired,
-};
 
 export default Vote;

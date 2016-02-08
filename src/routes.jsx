@@ -5,6 +5,7 @@ import querystring from 'querystring';
 import superagent from 'superagent';
 
 import merge from 'lodash/object/merge';
+import url from 'url';
 
 // components
 import BodyLayout from './views/layouts/BodyLayout';
@@ -26,14 +27,15 @@ import RegisterPage from './views/pages/register';
 import MessagesPage from './views/pages/messages';
 import MessageComposePage from './views/pages/messageCompose';
 import SubmitPage from './views/pages/submit';
-import constants from './constants';
+import WikiPage from './views/pages/wikiPage';
 
+import constants from './constants';
 import defaultConfig from './config';
 
 const config = defaultConfig();
 
 function setData(ctx, key, endpoint, options) {
-  var api = ctx.props.app.api;
+  const api = ctx.props.app.api;
 
   if (ctx.props.dataCache && ctx.props.dataCache[key]) {
     api.hydrate(endpoint, options, ctx.props.dataCache[key]);
@@ -44,10 +46,10 @@ function setData(ctx, key, endpoint, options) {
 }
 
 function buildAPIOptions(ctx, options={}) {
-  let apiOrigin = ctx.token ? 'authAPIOrigin' : 'nonAuthAPIOrigin';
-  let app = ctx.props.app;
+  const apiOrigin = ctx.token ? 'authAPIOrigin' : 'nonAuthAPIOrigin';
+  const app = ctx.props.app;
 
-  let apiOptions = merge({
+  const apiOptions = merge({
     origin: app.getConfig(apiOrigin),
     headers: {
       'user-agent': ctx.headers['user-agent'],
@@ -56,11 +58,12 @@ function buildAPIOptions(ctx, options={}) {
   }, options);
 
   if (ctx.token) {
-    apiOptions.headers['Authorization'] = `bearer ${ctx.token}`;
+    apiOptions.headers.Authorization = `bearer ${ctx.token}`;
   }
 
   if (app.config.apiPassThroughHeaders) {
-    for (var h in ctx.headers) {
+    let h;
+    for (h in ctx.headers) {
       if (app.config.apiPassThroughHeaders.indexOf(h) > -1) {
         apiOptions.headers[h] = ctx.headers[h];
       }
@@ -80,18 +83,19 @@ function filterContextProps(ctx) {
     userAgent: ctx.userAgent,
     csrf: ctx.csrf,
     referrer: ctx.headers.referer,
-    isGoogleCrawler: ctx.isGoogleCrawler,
     token: ctx.token,
     tokenExpires: ctx.tokenExpires,
     redirect: ctx.redirect,
     env: ctx.env,
+    notifications: ctx.notifications,
   };
 }
 
-function buildProps(ctx, app) {
-  var clientConfig = {};
+export function buildProps(ctx, app) {
+  const clientConfig = {};
 
-  for (let c in config) {
+  let c;
+  for (c in config) {
     clientConfig[c] = app.getConfig(c);
   }
 
@@ -125,7 +129,7 @@ function buildProps(ctx, app) {
 }
 
 function getSubreddit(ctx) {
-  let { subreddit } = ctx.params;
+  const { subreddit } = ctx.params;
 
   if (subreddit) {
     Object.assign(ctx.props, {
@@ -138,7 +142,7 @@ function getSubreddit(ctx) {
     const fakeSubs = ['all', 'mod', 'friends', 'random', 'randnsfw', 'myrandom'];
     if (subreddit.indexOf('+') === -1 && !fakeSubs.includes(subreddit)) {
 
-      let subredditOpts = buildAPIOptions(ctx, {
+      const subredditOpts = buildAPIOptions(ctx, {
         id: subreddit.toLowerCase(),
       });
 
@@ -147,19 +151,20 @@ function getSubreddit(ctx) {
   }
 }
 
-function userData(ctx, app) {
-  let { apiOptions } = ctx.props;
+export function userData(ctx, app) {
+  const { apiOptions } = ctx.props;
 
-  if (ctx.token) {
-    let userOptions =  Object.assign({}, apiOptions, {
+  if (ctx.props.token) {
+    const userOptions = Object.assign({}, apiOptions, {
       user: 'me',
     });
+
     setData(ctx, 'user', 'users', userOptions);
 
-    let prefOptions = Object.assign({}, apiOptions);
+    const prefOptions = Object.assign({}, apiOptions);
     setData(ctx, 'preferences', 'preferences', prefOptions);
 
-    let subOptions = Object.assign({}, apiOptions, {
+    const subOptions = Object.assign({}, apiOptions, {
       query: {
         sort: 'mine/subscriber',
         sr_detail: true,
@@ -167,12 +172,19 @@ function userData(ctx, app) {
         limit: 250,
       },
     });
-    subOptions.headers['user-agent'] = ctx.headers['user-agent'];
+
+    let userAgent;
+
+    if (ctx.headers) {
+      userAgent = ctx.headers['user-agent'];
+    } else if (apiOptions.headers) {
+      userAgent = apiOptions.headers['user-agent'];
+    }
+
+    subOptions.headers['user-agent'] = userAgent;
     setData(ctx, 'userSubscriptions', 'subreddits', subOptions);
-
   } else {
-
-    let subOptions = Object.assign({}, apiOptions, {
+    const subOptions = Object.assign({}, apiOptions, {
       query: {
         sort: 'default',
         sr_detail: true,
@@ -188,18 +200,22 @@ function userData(ctx, app) {
 
 function makeBody() {
   return (props) => {
-    let content = Array.prototype.map.call(arguments, (comp, i) => {
+    const content = Array.prototype.map.call(arguments, (comp, i) => {
       if (Array.isArray(comp)) {
         const [Component, propOveride] = comp;
         return <Component {...(propOveride || props)} key={ `${props.key}-${i} ` } />;
-      } else {
-        const Component = comp;
-        return <Component {... props} key={ `${props.key}-${i}` } />;
       }
+
+      const Component = comp;
+      return <Component {... props} key={ `${props.key}-${i}` } />;
     });
 
     return (
-      <BodyLayout { ...props } key='layout'>
+      // Note: please don't set a key here, as it will make React re-use the
+      // component when it really shouldn't. Properties that are promises,
+      // whose result is based on the state of the cache, won't be picked up
+      // as new props. Setting a key will break state when the cache has updated.
+      <BodyLayout { ...props }>
         { content }
       </BodyLayout>
     );
@@ -209,7 +225,7 @@ function makeBody() {
 
 function * globalMessage(next) {
   const config = this.props.config;
-  let message = config.globalMessage ? Object.assign({}, config.globalMessage): null;
+  const message = config.globalMessage ? Object.assign({}, config.globalMessage): null;
   const routeName = this.route.name;
 
   if (message && this.props.showGlobalMessage) {
@@ -227,9 +243,30 @@ function * globalMessage(next) {
   yield next;
 }
 
+export function loginRegisterOriginalUrl(query, headers) {
+  let redirectUrl;
+
+  if (query && query.originalUrl) {
+    redirectUrl = url.parse(query.originalUrl).path;
+  } else if (!redirectUrl && headers && headers.referer) {
+    const parsedReferrer = url.parse(headers.referer);
+    redirectUrl = parsedReferrer.path;
+  }
+
+  // Make sure redirectUrl is a a relative path. url.parse will accept any
+  // string and return it back as the path. path will be null when parsing empty string
+  if (redirectUrl && redirectUrl[0] === '/') {
+    if (redirectUrl.indexOf('/login') === 0 ||
+        redirectUrl.indexOf('/register') === 0) {
+      return '/';
+    }
+    return redirectUrl;
+  }
+}
+
 // The main entry point to this file is the routes function.
 function routes(app) {
-  let router = app.router;
+  const router = app.router;
 
   function * defaultLayout(next) {
     this.layout = Layout;
@@ -248,11 +285,11 @@ function routes(app) {
       this.url.indexOf('/health') === 0
     ) {
       return yield next;
-    } else {
-      getSubreddit(this, app);
-      userData(this, app);
-      return yield next;
     }
+
+    getSubreddit(this, app);
+    userData(this, app);
+    return yield next;
   }
 
   router.get('health', '/health', function * () {
@@ -269,9 +306,21 @@ function routes(app) {
   router.use(defaultLayout);
   router.use(globalMessage);
 
-  function * indexPage () {
-    let props = this.props;
-    var sort = this.query.sort || 'hot';
+
+  function *indexPage () {
+    const props = this.props;
+    const sort = this.query.sort || 'hot';
+
+    this.preServerRender = function indexPagePreRender() {
+      // If we're on a next/prev for an invalid thing_id, so that no results are
+      // sent back, we have a stale cache. Redirect back to the first page of
+      // the sub, multi, or other.
+      if (IndexPage.isStalePage(this.query, this.props.dataCache.listings)) {
+        app.setNotification(this.cookies, 'stalePage');
+        this.redirect(IndexPage.stalePageRedirectUrl(this.path, this.query));
+        return false;
+      }
+    };
 
     Object.assign(this.props, {
       sort,
@@ -289,7 +338,7 @@ function routes(app) {
       props.topNavLink = `/u/${props.multiUser}/m/${props.multi}`;
     }
 
-    let listingOpts = buildAPIOptions(this, {
+    const listingOpts = buildAPIOptions(this, {
       query: {
         after: props.after,
         before: props.before,
@@ -311,9 +360,9 @@ function routes(app) {
   router.get('index.subreddit', '/r/:subreddit', indexPage);
   router.get('index.multi', '/u/:user/m/:multi', indexPage);
 
-  function * commentsPage() {
-    var ctx = this;
-    var props = this.props;
+  function *commentsPage() {
+    const ctx = this;
+    const props = this.props;
 
     Object.assign(props, {
       sort: ctx.query.sort,
@@ -321,7 +370,7 @@ function routes(app) {
       commentId: ctx.params.commentId,
     });
 
-    let commentsOpts = buildAPIOptions(ctx, {
+    const commentsOpts = buildAPIOptions(ctx, {
       linkId: ctx.params.listingId,
       sort: ctx.query.sort || 'confidence',
       query: {},
@@ -334,8 +383,8 @@ function routes(app) {
 
     props.data.set('comments', app.api.comments.get(commentsOpts));
 
-    let listingOpts = buildAPIOptions(ctx, {
-      id: 't3_' + ctx.params.listingId,
+    const listingOpts = buildAPIOptions(ctx, {
+      id: `t3_${ctx.params.listingId}`,
     });
 
     props.data.set('listing', app.api.links.get(listingOpts));
@@ -355,10 +404,10 @@ function routes(app) {
     this.body = makeBody(SubredditAboutPage);
   });
 
-  function * searchPage() {
-    var ctx = this;
+  function *searchPage() {
+    const ctx = this;
 
-    let props = Object.assign(this.props, {
+    const props = Object.assign(this.props, {
       subredditName: ctx.params.subreddit,
       after: ctx.query.after,
       before: ctx.query.before,
@@ -368,7 +417,7 @@ function routes(app) {
       query: ctx.query.q,
     });
 
-    var searchOpts = {};
+    let searchOpts = {};
 
     if (ctx.query.q) {
       searchOpts = buildAPIOptions(ctx, {
@@ -394,78 +443,78 @@ function routes(app) {
   router.get('search.subreddit', '/r/:subreddit/search', searchPage);
 
   function userProfileSubnav(active, userName) {
-    var aboutActive = active === 'about' ? 'active' : false;
-    var activityActive = active === 'activity' ? 'active' : false;
-    var gildActive = active === 'gild' ? 'active' : false;
+    const aboutActive = active === 'about' ? 'active' : false;
+    const activityActive = active === 'activity' ? 'active' : false;
+    const gildActive = active === 'gild' ? 'active' : false;
 
     return [
       <li
-        className='TextSubNav-li'
-        active={ aboutActive }
+        className={ `TextSubNav-li ${aboutActive}` }
         key={ `about-${aboutActive.toString()}` }
       >
-        <a className={ `TextSubNav-a ${aboutActive}` } href={ `/u/${userName}` }>About</a>
+        <a className='TextSubNav-a' href={ `/u/${userName}` }>About</a>
       </li>,
       <li
-        className='TextSubNav-li'
-        active={ activityActive }
+        className={ `TextSubNav-li ${activityActive}` }
         key={ `activity-${activityActive.toString()}` }
       >
         <a
-          className={ `TextSubNav-a ${activityActive}` }
+          className='TextSubNav-a'
           href={ `/u/${userName}/activity` }
         >Activity</a>
       </li>,
       <li
-        className='TextSubNav-li'
-        active={ gildActive }
+        className={ `TextSubNav-li ${gildActive}` }
         key={ `gild-${gildActive.toString()}` }
       >
-        <a className={ `TextSubNav-a ${gildActive}` } href={ `/u/${userName}/gild` }>Give gold</a>
+        <a className='TextSubNav-a' href={ `/u/${userName}/gild` }>Give gold</a>
       </li>,
     ];
   }
 
   router.get('user.profile', '/u/:user', function *() {
-    var ctx = this;
+    const ctx = this;
 
     this.props.userName = ctx.params.user;
     this.props.title = `about u/${ctx.params.user}`;
+    this.props.topNavLink = `/u/${ctx.params.user}`;
     this.props.metaDescription = `about u/${ctx.params.user} on reddit.com`;
 
-    let userOpts = buildAPIOptions(ctx, {
+    const userOpts = buildAPIOptions(ctx, {
       user: ctx.params.user,
     });
 
     this.props.data.set('userProfile', app.api.users.get(userOpts));
 
-    let subNavProps = {
+    const subNavProps = {
       children: userProfileSubnav('about', ctx.params.user),
+      userName: ctx.params.user,
     };
 
     this.body = makeBody([TextSubNav, subNavProps], UserProfilePage);
   });
 
   router.get('user.gild', '/u/:user/gild', function *() {
-    var ctx = this;
+    const ctx = this;
 
     this.props.userName = ctx.params.user;
     this.props.title = `about u/${ctx.params.user}`;
     this.props.metaDescription = `about u/${ctx.params.user} on reddit.com`;
     this.props.topNavLink = `/u/${ctx.params.user}`;
 
-    let subNavProps = {
+    const subNavProps = {
       children: userProfileSubnav('gild', ctx.params.user),
+      userName: ctx.params.user,
     };
 
     this.body = makeBody([TextSubNav, subNavProps], UserGildPage);
   });
 
   router.get('user.activity', '/u/:user/activity', function *() {
-    var sort = this.query.sort || 'hot';
-    var activity = this.query.activity || 'comments';
+    const sort = this.query.sort || 'hot';
+    const activity = this.query.activity || 'comments';
 
-    var ctx = this;
+    const ctx = this;
 
     Object.assign(this.props, {
       activity,
@@ -478,9 +527,9 @@ function routes(app) {
       metaDescription: `about u/${ctx.params.user} on reddit.com`,
     });
 
-    let props = this.props;
+    const props = this.props;
 
-    let activitiesOpts = buildAPIOptions(ctx, {
+    const activitiesOpts = buildAPIOptions(ctx, {
       activity,
       query: {
         sort,
@@ -492,15 +541,16 @@ function routes(app) {
 
     this.props.data.set('activities', app.api.activities.get(activitiesOpts));
 
-    let subNavProps = {
+    const subNavProps = {
       children: userProfileSubnav('activity', ctx.params.user),
+      userName: ctx.params.user,
     };
 
     this.body = makeBody([TextSubNav, subNavProps], UserActivityPage);
   });
 
-  function * submitPage() {
-    let { query, props } = this;
+  function *submitPage() {
+    const { query, props } = this;
 
     if (query) {
       if (query.selftext) {
@@ -521,26 +571,23 @@ function routes(app) {
 
     if (!this.token) {
       let submitUrl = this.path;
-      let submitQuery = querystring.stringify(query);
+      const submitQuery = querystring.stringify(query);
       submitUrl += submitQuery ? `?${submitQuery}` : '';
 
-      return this.redirect('/login?originalUrl=' + submitUrl);
+      return this.redirect(`/login?originalUrl=${submitUrl}`);
     }
 
-    this.body = function(props) {
-      return (
-        <SubmitPage key={ this.key } {...props}/>
-      );
-    };
+    props.hideTopNav = true;
+    this.body = makeBody(SubmitPage);
   }
 
   router.get('submit', '/submit', submitPage);
   router.get('submit', '/r/:subreddit/submit', submitPage);
 
-  function * saved (hidden=false) {
-    let ctx = this;
-    let props = this.props;
-    let sort = this.query.sort || 'hot';
+  function *saved (hidden=false) {
+    const ctx = this;
+    const props = this.props;
+    const sort = this.query.sort || 'hot';
 
     Object.assign(this.props, {
       sort,
@@ -558,7 +605,7 @@ function routes(app) {
       saved = app.api.hidden;
     }
 
-    let savedOpts = buildAPIOptions(ctx, {
+    const savedOpts = buildAPIOptions(ctx, {
       query: {
         after: props.after,
         before: props.before,
@@ -585,20 +632,25 @@ function routes(app) {
   });
 
   router.get('user.login', '/login', function * () {
-    this.props.error = this.query.error;
+    const { error, message } = this.query;
+    const originalUrl = loginRegisterOriginalUrl(this.query, this.headers);
+    this.props = {...this.props, error, message, originalUrl };
     this.body = makeBody(LoginPage);
   });
 
   router.get('user.register', '/register', function * () {
+    const { error, message } = this.query;
+    const originalUrl = loginRegisterOriginalUrl(this.query, this.headers);
+    this.props = {...this.props, error, message, originalUrl };
     this.body = makeBody(RegisterPage);
   });
 
   function tryLoad (url, options) {
-    var endpoint = options.origin + url + '.json';
+    const endpoint = `${options.origin}${url}.json`;
 
     return new Promise(function(resolve) {
       try {
-        let sa = superagent
+        const sa = superagent
                   .head(endpoint)
                   .set(options.headers)
                   .timeout(constants.DEFAULT_API_TIMEOUT);
@@ -621,28 +673,32 @@ function routes(app) {
     });
   }
 
-  router.get('/goto', function * () {
-    let location = this.query.location.toLowerCase();
-    let token = this.token;
+  function makeOptions(token, app) {
     let apiOptions;
-    let result;
-
-    app.emit('goto', location);
-
     if (token) {
-      apiOptions =  {
+      apiOptions = {
         origin: app.getConfig('authAPIOrigin'),
         headers: {
           'Authorization': `bearer ${token}`,
         },
       };
     } else {
-      apiOptions =  {
+      apiOptions = {
         origin: app.getConfig('nonAuthAPIOrigin'),
       };
     }
 
-    let options = app.api.buildOptions(apiOptions);
+    return app.api.buildOptions(apiOptions);
+  }
+
+  router.get('/goto', function * () {
+    const token = this.token;
+    let location = this.query.location.toLowerCase();
+    let result;
+
+    app.emit('goto', location);
+
+    const options = makeOptions(token, app);
 
     if (this.headers['user-agent']) {
       options.headers['user-agent'] = this.headers['user-agent'];
@@ -676,7 +732,7 @@ function routes(app) {
       locationQuery = this.query.location.split('/')[1];
     }
 
-    var query = querystring.stringify({
+    const query = querystring.stringify({
       q: locationQuery,
     });
 
@@ -685,11 +741,11 @@ function routes(app) {
 
   router.get('messages.compose', '/message/compose', function *() {
     if (!this.token) {
-      let query = {
+      const query = {
         originalUrl: this.url,
       };
 
-      return this.redirect('/login?' + querystring.stringify(query));
+      return this.redirect(`/login?${querystring.stringify(query)}`);
     }
 
 
@@ -704,22 +760,22 @@ function routes(app) {
 
   router.get('messages', '/message/:view', function *() {
     if (!this.token) {
-      let query = {
+      const query = {
         originalUrl: this.url,
       };
 
-      return this.redirect('/login?' + querystring.stringify(query));
+      return this.redirect(`/login?${querystring.stringify(query)}`);
     }
 
-    var ctx = this;
+    const ctx = this;
 
-    let props = Object.assign(this.props, {
+    const props = Object.assign(this.props, {
       title: 'Messages',
       view: ctx.params.view,
       metaDescription: 'user messages at reddit.com',
     });
 
-    let listingOpts = buildAPIOptions(ctx, {
+    const listingOpts = buildAPIOptions(ctx, {
       view: props.view,
     });
 
@@ -728,6 +784,52 @@ function routes(app) {
     this.body = makeBody(MessagesPage);
   });
 
+  function * wikiPage() {
+    // const path = this.params.wikiPath || 'index';  //this.params[0].substr(1) || 'index';
+    const { subreddit, subPath, wikiPath } = this.params;
+
+    let path = '';
+    if (subPath) {
+      path = `${subPath}${wikiPath ? '/': ''}`;
+    }
+
+    if (wikiPath) {
+      path += wikiPath;
+    } else if (!path) {
+      path = 'index';
+    }
+
+    const options = buildAPIOptions(this, {
+      subreddit,
+      path,
+      type: subPath || 'wikiPage',
+      query: {
+        raw_json: 1,
+      },
+    });
+
+    const wikiGet = new Promise(function(resolve, reject) {
+      app.api.wiki.get(options).then(resolve, function(e) {
+        // handle api crap. otherwise user gets redirected to auth if loggedout and wiki is disabled.
+        if (e.status === 403) {
+          e.status = 404;
+        }
+        reject(e);
+      });
+    });
+
+    this.props.data.set('wikiPage', wikiGet);
+    this.body = makeBody(WikiPage);
+  }
+
+  const regex = 'discussions|revisions|settings|pages';
+  router.get('wiki', `/r/:subreddit/wiki/:subPath(${regex})/:wikiPath(.*)?`, wikiPage);
+  router.get('wiki', `/wiki/:subPath(${regex})/:wikiPath(.*)?`, wikiPage);
+
+  router.get('wiki.subreddit', '/r/:subreddit/wiki/:wikiPath(.*)?', wikiPage);
+  router.get('wiki', '/wiki/:wikiPath(.*)?', wikiPage);
+
+
   router.get('404', '*', function *() {
     this.props.status = 404;
     this.body = app.errorPage(this, 404);
@@ -735,4 +837,4 @@ function routes(app) {
 }
 
 export default routes;
-export var buildProps = buildProps;
+export { buildProps };

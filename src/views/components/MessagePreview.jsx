@@ -9,6 +9,10 @@ import Inbox from '../components/Inbox';
 const subredditRegex = /\/r\/([^/]*)/;
 
 class MessagePreview extends BaseComponent {
+  static propTypes = {
+    onSubmit: React.PropTypes.func.isRequired,
+  };
+  
   constructor(props) {
     super(props);
 
@@ -26,7 +30,7 @@ class MessagePreview extends BaseComponent {
 
   _onReplyClick (e) {
     e.preventDefault();
-    let showReply = this.state.showReply;
+    const showReply = this.state.showReply;
 
     this.setState({
       showReply: !showReply,
@@ -42,12 +46,12 @@ class MessagePreview extends BaseComponent {
       return;
     }
 
-    var message = new models.Message({
+    const message = new models.Message({
       text,
       thingId: this.props.message.parent_id || this.props.message.name,
     });
 
-    var options = this.props.app.api.buildOptions(this.props.apiOptions);
+    let options = this.props.app.api.buildOptions(this.props.apiOptions);
 
     options = Object.assign(options, {
       model: message,
@@ -57,26 +61,25 @@ class MessagePreview extends BaseComponent {
       sending: true,
     });
 
-    this.props.app.api.messages.post(options).then((function(message) {
+    this.props.app.api.messages.post(options).then((function(data) {
       if (this.props.onSubmit) {
-        this.props.onSubmit(message);
+        this.props.onSubmit(data);
       }
 
       this.setState({
         sending: false,
         showReply: false,
       });
-
     }).bind(this));
 
     this.props.app.emit('message:reply', message);
   }
 
   render () {
-    let message = this.props.message;
-    let props = this.props;
+    const message = this.props.message;
+    const props = this.props;
 
-    let submitted = moment(message.created_utc * 1000);
+    const submitted = moment(message.created_utc * 1000);
     let formattedSubmitted;
 
     if (submitted.diff(moment(), 'days')) {
@@ -85,14 +88,14 @@ class MessagePreview extends BaseComponent {
       formattedSubmitted = submitted.format('LT');
     }
 
-    let readClass = message.new ? ' message-unread' : '';
-    let isMine = message.author === props.user.name;
+    const readClass = message.new ? ' message-unread' : '';
+    const isMine = message.author === props.user.name;
 
     let context;
     let subreddit;
     let reply;
 
-    let link = message.context || `/message/messages/${message.name}`;
+    const link = message.context || `/message/messages/${message.name}`;
 
     let type = 'Direct message';
 
@@ -134,8 +137,8 @@ class MessagePreview extends BaseComponent {
       );
     }
 
-    var submitClass = '';
-    var submitDisabled = false;
+    let submitClass = '';
+    let submitDisabled = false;
 
     if (this.state.sending) {
       submitClass = 'disabled';
@@ -150,12 +153,12 @@ class MessagePreview extends BaseComponent {
               ref='replyText'
               name='reply'
               placeholder='Message...'
-              className={ 'form-control ' + submitClass }
+              className={ `form-control ${submitClass}` }
             />
           </div>
           <button
             type='submit'
-            className={ 'btn btn-primary btn-post btn-block ' + submitClass }
+            className={ `btn btn-primary btn-post btn-block ${submitClass}` }
             disabled={ submitDisabled }
           >Send</button>
           <p>
@@ -187,7 +190,7 @@ class MessagePreview extends BaseComponent {
         </h4>
       );
     } else {
-      let distinguished = message.distinguished ? ' text-' + message.distinguished : '';
+      const distinguished = message.distinguished ? ` text-${message.distinguished}` : '';
 
       author = (
         <h4 className='message-author'>
@@ -217,7 +220,7 @@ class MessagePreview extends BaseComponent {
     }
 
     return (
-      <article className={ 'panel message-preview' + readClass }>
+      <article className={ `panel message-preview${readClass}` }>
         <div className='panel-body'>
           <div className='row'>
             <div className='col-xs-12'>
@@ -250,13 +253,5 @@ class MessagePreview extends BaseComponent {
     );
   }
 }
-
-//TODO: someone more familiar with this component could eventually fill this out better
-MessagePreview.propTypes = {
-  // apiOptions: React.PropTypes.object,
-  // lastReply: React.PropTypes.bool.isRequired,
-  // message: React.PropTypes.object.isRequired,
-  onSubmit: React.PropTypes.func.isRequired,
-};
 
 export default MessagePreview;

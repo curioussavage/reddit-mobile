@@ -3,18 +3,30 @@ import remove from 'lodash/array/remove';
 import { models } from 'snoode';
 
 import BasePage from './BasePage';
-import Comment from '../components/Comment';
-import CommentBox from '../components/CommentBox';
+import LinkTools from '../components/LinkTools';
+import Comment from '../components/comment/Comment';
 import GoogleCarouselMetadata from '../components/GoogleCarouselMetadata';
 import Listing from '../components/Listing';
 import Loading from '../components/Loading';
 import TopSubnav from '../components/TopSubnav';
 
 class ListingPage extends BasePage {
+  static propTypes = {
+    commentId: React.PropTypes.string,
+    data: React.PropTypes.object,
+    listingId: React.PropTypes.string.isRequired,
+    sort: React.PropTypes.string,
+    subredditName: React.PropTypes.string,
+  };
+
   constructor(props) {
     super(props);
-    this.state.editing = false;
-    this.state.loadingMoreComments = false;
+    
+    this.state = {
+      ...this.state,
+      editing: false,
+      loadingMoreComments: false,
+    };
 
     this.onNewComment = this.onNewComment.bind(this);
     this.toggleEdit = this.toggleEdit.bind(this);
@@ -29,7 +41,7 @@ class ListingPage extends BasePage {
 
   onNewComment (comment) {
     // make a shallow copy so we can append to it
-    var comments = this.state.data.comments.slice();
+    const comments = this.state.data.comments.slice();
     comments.splice(0, 0, comment);
 
     this.setState({
@@ -39,13 +51,13 @@ class ListingPage extends BasePage {
 
   saveUpdatedText(newText) {
     const {app, apiOptions} = this.props;
-    let listing = this.state.data.listing;
+    const listing = this.state.data.listing;
 
     if (newText === listing.selftext) {
       return;
     }
 
-    let link = new models.Link(listing);
+    const link = new models.Link(listing);
     let options = app.api.buildOptions(apiOptions);
 
     options = Object.assign(options, {
@@ -55,7 +67,7 @@ class ListingPage extends BasePage {
 
     app.api.links.patch(options).then((newListing) => {
       if (newListing) {
-        var data = Object.assign({}, this.state.data);
+        const data = Object.assign({}, this.state.data);
         data.listing = newListing;
 
         this.setState({
@@ -71,8 +83,8 @@ class ListingPage extends BasePage {
   }
 
   onDelete(id) {
-    var {app, subredditName, apiOptions} = this.props;
-    var options = app.api.buildOptions(apiOptions);
+    const { app, subredditName, apiOptions } = this.props;
+    let options = app.api.buildOptions(apiOptions);
 
     options = Object.assign(options, {
       id,
@@ -81,14 +93,14 @@ class ListingPage extends BasePage {
     // nothing returned for this endpoint
     // so we assume success :/
     app.api.links.delete(options).then(() => {
-      var data = this.state.data.listing;
+      const data = this.state.data.listing;
       remove(data, {name: id});
 
       app.setState({
         data,
       });
 
-      app.redirect('/r/' + subredditName);
+      app.redirect(`/r/${subredditName}`);
     });
   }
 
@@ -97,17 +109,7 @@ class ListingPage extends BasePage {
       editing: !this.state.editing,
     });
   }
-
-  _getLocalStorageKeys() {
-    var keys = [];
-    if (global.localStorage) {
-      for (var key in localStorage) {
-        keys.push(key);
-      }
-    }
-    return keys;
-  }
-
+  
   async loadMore(e) {
     e.preventDefault();
     const { app, apiOptions, sort } = this.props;
@@ -125,11 +127,11 @@ class ListingPage extends BasePage {
       sort: sort || 'best',
     });
 
-    this.setState({loadingMoreComments: true});
+    this.setState({ loadingMoreComments: true });
 
     try {
-      let res = await app.api.comments.get(options);
-      let newData = Object.assign({}, data);
+      const res = await app.api.comments.get(options);
+      const newData = Object.assign({}, data);
       newData.comments = data.comments
         .slice(0, data.comments.length - 1)
         .concat(res.body);
@@ -145,22 +147,28 @@ class ListingPage extends BasePage {
   }
 
   render() {
-    let { data, editing, loadingMoreComments, linkEditError } = this.state;
-    let { app, apiOptions, commentId, ctx, token, sort, subredditName,
-         isGoogleCrawler, origin } = this.props;
+    const { data, editing, loadingMoreComments, linkEditError } = this.state;
 
-    sort = sort || 'best';
+    const {
+      app,
+      apiOptions,
+      commentId,
+      ctx,
+      token,
+      subredditName,
+    } = this.props;
+
+    const sort = this.props.sort || 'best';
+
+    const { origin } = this.props.config;
+    const { url, env } = ctx;
 
     if (!data || !data.listing) {
       return (<Loading />);
     }
 
-    let user = data.user,
-      listing = data.listing,
-      comments = data.comments,
-      author = listing.author,
-      permalink = listing.cleanPermalink;
-
+    const { user, listing, comments } = data;
+    const { author, permalink } = listing;
 
     let singleComment;
     if (commentId) {
@@ -174,48 +182,64 @@ class ListingPage extends BasePage {
       );
     }
 
-
     let commentsList;
+    let googleCarousel;
+
     if (comments) {
       commentsList = comments.map((comment, i) => {
-        var key = `comment-${i}`;
+        const key = `comment-${i}`;
 
         if (comment && comment.bodyHtml !== undefined) {
           return (
-            <Comment
-              key={ key }
-              ctx={ ctx }
-              app={ app }
-              subredditName={ subredditName }
-              permalinkBase={ permalink }
-              highlight={ commentId }
-              comment={ comment }
-              index={ i }
-              nestingLevel={ 0 }
-              op={ author }
-              user={ user }
-              token={ token }
-              apiOptions={ apiOptions }
-              sort={ sort }
-            />
-          );
-        } else {
-          let numChildren = comment.children.length;
-          let word = numChildren > 1 ? 'replies' : 'reply';
-          let permalink = permalink + comment.parent_id.substring(3) + '?context=0';
-          let text = loadingMoreComments ? 'Loading...' :
-                                           `load more comments (${numChildren} ${word})`;
-          return (
-            <a
-              key={ key }
-              href={ permalink }
-              data-no-route='true'
-              data-index={ i }
-              onClick={ this.loadMore }
-            >{ text }</a>
+            <div className='listing-comment' key={ comment.id } >
+              <Comment
+                ctx={ ctx }
+                app={ app }
+                subredditName={ subredditName }
+                permalinkBase={ permalink }
+                highlightedComment={ commentId }
+                comment={ comment }
+                index={ i }
+                nestingLevel={ 0 }
+                op={ author }
+                user={ user }
+                token={ token }
+                apiOptions={ apiOptions }
+                sort={ sort }
+                repliesLocked={ listing.locked }
+              />
+            </div>
           );
         }
+
+        const numChildren = comment.children.length;
+        const word = numChildren > 1 ? 'replies' : 'reply';
+        const permalink = `${permalink}${comment.parent_id.substring(3)}?context=0`;
+        const text = loadingMoreComments ? 'Loading...' :
+                                         `load more comments (${numChildren} ${word})`;
+        return (
+          <a
+            key={ key }
+            href={ permalink }
+            data-no-route='true'
+            data-index={ i }
+            onClick={ this.loadMore }
+          >{ text }</a>
+        );
       });
+
+      // Show google crawler metadata when the server renders
+      if (env === 'SERVER') {
+        googleCarousel = (
+          <GoogleCarouselMetadata
+            url={ url }
+            app={ app }
+            origin={ origin }
+            listing={ listing }
+            comments={ comments }
+          />
+        );
+      }
     } else {
       commentsList = (
         <div className='Loading-Container'>
@@ -226,12 +250,6 @@ class ListingPage extends BasePage {
 
     return (
       <div className='listing-main'>
-        <GoogleCarouselMetadata
-          origin={ origin }
-          show={ isGoogleCrawler }
-          listing={ listing }
-          comments={ comments }
-        />
         <TopSubnav
           { ...this.props }
           user={ user }
@@ -239,6 +257,7 @@ class ListingPage extends BasePage {
           list='comments'
         />
         <div className='container listing-content' key='container'>
+          { googleCarousel }
           <Listing
             app={ app }
             ctx={ ctx }
@@ -254,15 +273,16 @@ class ListingPage extends BasePage {
             winWidth={ this.props.ctx.winWidth }
             toggleEdit={ this.toggleEdit }
           />
-          <CommentBox
-            apiOptions={ apiOptions }
-            thingId={ listing.name }
-            user={ user }
-            token={ token }
-            app={ app }
-            ctx={ ctx }
-            onSubmit={ this.onNewComment }
-          />
+          <div className="listing-content__tools">
+            <LinkTools
+              app={ app }
+              apiOptions={ apiOptions }
+              token={ token }
+              linkId={ listing.name }
+              onNewComment={ this.onNewComment }
+              isLocked={ listing.locked }
+            />
+          </div>
           { singleComment }
           { commentsList }
         </div>
@@ -270,14 +290,5 @@ class ListingPage extends BasePage {
     );
   }
 }
-
-ListingPage.propTypes = {
-  commentId: React.PropTypes.string,
-  data: React.PropTypes.object,
-  isGoogleCrawler: React.PropTypes.bool,
-  listingId: React.PropTypes.string.isRequired,
-  sort: React.PropTypes.string,
-  subredditName: React.PropTypes.string,
-};
 
 export default ListingPage;

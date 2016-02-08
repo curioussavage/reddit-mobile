@@ -3,12 +3,14 @@ require('babel/register')({
   only: /.+(?:(?:\.es6\.js)|(?:.jsx))$/,
   extensions: ['.js', '.es6.js', '.jsx' ],
   sourceMap: true,
-  stage: 0
+  stage: 0,
 });
 
 // lib
 require('./lib/titleCase');
 require('./lib/formatDifference');
+require('./lib/formatNumber');
+require('./lib/extractErrorMsg');
 
 // Even with shallow rendering react currently looks for document when setState is used.
 // see https://github.com/facebook/react/issues/4019
@@ -24,3 +26,6 @@ require('./views/layouts/BodyLayout');
 // pages
 require('./views/pages/Index');
 require('./views/pages/userSaved');
+
+// functions from routes
+require('./routes/loginRegisterOriginalUrl.es6.js');
