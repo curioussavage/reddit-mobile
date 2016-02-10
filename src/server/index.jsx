@@ -28,7 +28,7 @@ import setLoggedOutCookies from '../lib/loid';
 
 import Config from '../config';
 
-const ignoreCSRF = ['/timings', '/error'];
+const ignoreCSRF = ['/timings', '/error', '/login', '/register'];
 
 function getBucket(loid) {
   return parseInt(loid.substring(loid.length - 4), 36) % 100;
@@ -98,7 +98,7 @@ function setCompact(ctx, app) {
 }
 
 // Save a static reference to the config object at startup
-const defaultConfig = Config();
+const defaultConfig = Config;
 function formatBootstrap(props) {
   let p;
   for (p in props.config) {

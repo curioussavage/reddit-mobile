@@ -23,7 +23,6 @@ import UserActivityPage from './views/pages/userActivity';
 import UserSavedPage from './views/pages/userSaved';
 import FAQPage from './views/pages/faq';
 import LoginPage from './views/pages/login';
-import RegisterPage from './views/pages/register';
 import MessagesPage from './views/pages/messages';
 import MessageComposePage from './views/pages/messageCompose';
 import SubmitPage from './views/pages/submit';
@@ -34,7 +33,7 @@ import defaultConfig from './config';
 import { SORTS } from './sortValues';
 import isFakeSubreddit, { randomSubs } from './lib/isFakeSubreddit';
 
-const config = defaultConfig();
+const config = defaultConfig;
 
 function setData(ctx, key, endpoint, options) {
   const api = ctx.props.app.api;
@@ -672,19 +671,31 @@ function routes(app) {
   });
 
   router.get('user.login', '/login', function * () {
-    const { error, message } = this.query;
     const originalUrl = loginRegisterOriginalUrl(this.query, this.headers);
-    this.props = {...this.props, error, message, originalUrl };
-    this.props.hideTopNav = true;
+
+    this.props = {
+      ...this.props,
+      ...this.query,
+      originalUrl,
+      hideTopNav: true,
+      mode: LoginPage.modes.login,
+    };
+
     this.body = makeBody(LoginPage);
   });
 
   router.get('user.register', '/register', function * () {
-    const { error, message } = this.query;
     const originalUrl = loginRegisterOriginalUrl(this.query, this.headers);
-    this.props = {...this.props, error, message, originalUrl };
-    this.props.hideTopNav = true;
-    this.body = makeBody(RegisterPage);
+
+    this.props = {
+      ...this.props,
+      ...this.query,
+      originalUrl,
+      hideTopNav: true,
+      mode: LoginPage.modes.register,
+    };
+
+    this.body = makeBody(LoginPage);
   });
 
   function tryLoad (url, options) {
