@@ -28,8 +28,9 @@
 }
 
 .panel.message-preview {
-  margin-bottom: 0;
+  // margin-bottom: 0;
   border-bottom: solid 1px @gray-lighter;
+  border-top: solid 1px @gray-lighter;
   box-shadow: none;
 
   .message-preview:last-child {
@@ -60,7 +61,7 @@
   }
 }
 
-.message-preivew-texarea-holder {
+.message-preview-textarea-holder {
   overflow: hidden;
   height: 50px;
   margin-bottom: 5px;
@@ -68,4 +69,10 @@
   .form-control {
     resize: none;
   }
+}
+
+.messagePrev__reply-btn {
+  height: 40px;
+  max-width: 400px;
+  // margin: 0 auto;
 }

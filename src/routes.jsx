@@ -798,7 +798,7 @@ function routes(app) {
     this.body = makeBody(MessageComposePage);
   });
 
-  router.get('messages', '/message/:view', function *() {
+  function * messages() {
     if (!this.token) {
       const query = {
         originalUrl: this.url,
@@ -807,11 +807,14 @@ function routes(app) {
       return this.redirect(`/login?${querystring.stringify(query)}`);
     }
 
+    const { view, subreddit } = this.params;
+
     const ctx = this;
 
     const props = Object.assign(this.props, {
+      view,
+      subreddit,
       title: 'Messages',
-      view: ctx.params.view,
       metaDescription: 'user messages at reddit.com',
     });
 
@@ -819,10 +822,17 @@ function routes(app) {
       view: props.view,
     });
 
+    if (subreddit) {
+      listingOpts.subreddit = subreddit;
+    }
+
     this.props.data.set('messages', app.api.messages.get(listingOpts));
 
     this.body = makeBody(MessagesPage);
-  });
+  }
+
+  router.get('messages', '/r/:subreddit/message/:view', messages);
+  router.get('messages', '/message/:view', messages);
 
   function * wikiPage() {
     // const path = this.params.wikiPath || 'index';  //this.params[0].substr(1) || 'index';

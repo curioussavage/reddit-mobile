@@ -2,6 +2,7 @@ import React from 'react';
 import { models } from 'snoode';
 import moment from 'moment';
 import process from 'reddit-text-js';
+import SquareButton from './formElements/SquareButton';
 
 import BaseComponent from './BaseComponent';
 import Inbox from '../components/Inbox';
@@ -12,16 +13,19 @@ class MessagePreview extends BaseComponent {
   static propTypes = {
     onSubmit: React.PropTypes.func.isRequired,
   };
-  
+
   constructor(props) {
     super(props);
 
     this.state = {
       showReply: false,
+      expanded: false,
     };
 
     this._onReplyClick = this._onReplyClick.bind(this);
     this._onReplySubmit = this._onReplySubmit.bind(this);
+    this.makeReply = this.makeReply.bind(this);
+    this.toggleExpanded = this.toggleExpanded.bind(this);
   }
 
   shouldComponentUpdate (nextProps, nextState) {
@@ -75,6 +79,59 @@ class MessagePreview extends BaseComponent {
     this.props.app.emit('message:reply', message);
   }
 
+  toggleExpanded() {
+    this.setState({
+      expanded: !this.state.expanded,
+    });
+  }
+
+  makeReply() {
+    const message = this.props.message;
+    let submitClass = '';
+    let submitDisabled = false;
+
+    if (this.state.sending) {
+      submitClass = 'disabled';
+      submitDisabled = true;
+    }
+
+    if (this.state.showReply) {
+      return (
+        <form action='/mesage' method='POST' onSubmit={ this._onReplySubmit }>
+          <div className='message-preview-textarea-holder'>
+            <textarea
+              ref='replyText'
+              name='reply'
+              placeholder='Message...'
+              className={ `form-control ${submitClass}` }
+            />
+          </div>
+          <button
+            type='submit'
+            className={ `btn btn-primary btn-post btn-block ${submitClass}` }
+            disabled={ submitDisabled }
+          >Send</button>
+          <p>
+            <a href='#' className='btn btn-link' onClick={ this._onReplyClick }>Cancel</a>
+          </p>
+        </form>
+      );
+    }
+
+    if (!message.context && !message.replies &&
+        this.props.lastReply && (this.state.expanded || this.props.isReply)) {
+      return (
+        <div className='messagePrev__reply-btn'>
+          <SquareButton
+            text='Reply'
+            onClick={ this._onReplyClick }
+          />
+        </div>
+      );
+    }
+
+  }
+
   render () {
     const message = this.props.message;
     const props = this.props;
@@ -93,7 +150,6 @@ class MessagePreview extends BaseComponent {
 
     let context;
     let subreddit;
-    let reply;
 
     const link = message.context || `/message/messages/${message.name}`;
 
@@ -137,48 +193,6 @@ class MessagePreview extends BaseComponent {
       );
     }
 
-    let submitClass = '';
-    let submitDisabled = false;
-
-    if (this.state.sending) {
-      submitClass = 'disabled';
-      submitDisabled = true;
-    }
-
-    if (this.state.showReply) {
-      reply = (
-        <form action='/mesage' method='POST' onSubmit={ this._onReplySubmit }>
-          <div className='message-preivew-texarea-holder'>
-            <textarea
-              ref='replyText'
-              name='reply'
-              placeholder='Message...'
-              className={ `form-control ${submitClass}` }
-            />
-          </div>
-          <button
-            type='submit'
-            className={ `btn btn-primary btn-post btn-block ${submitClass}` }
-            disabled={ submitDisabled }
-          >Send</button>
-          <p>
-            <a href='#' className='btn btn-link' onClick={ this._onReplyClick }>Cancel</a>
-          </p>
-        </form>
-      );
-    } else {
-      if (!message.context && !message.replies && props.lastReply) {
-        reply = (
-          <a
-            href={ link }
-            className='btn btn-xs btn-primary'
-            onClick={ this._onReplyClick }
-            data-no-route='true'
-          >Reply</a>
-        );
-      }
-    }
-
     let author;
 
     if (isMine) {
@@ -203,50 +217,58 @@ class MessagePreview extends BaseComponent {
     }
 
     let replies;
+    const reply = this.makeReply();
 
-    if (message.replies && message.replies.length > 0) {
-      replies = (
-        <div className='col-xs-11 col-xs-offset-1'>
-          <Inbox
-            app={ this.props.app }
-            isReply={ true }
-            messages={ message.replies }
-            user={ this.props.user }
-            token={ this.props.token }
-            apiOptions={ this.props.apiOptions }
-          />
-        </div>
-      );
+    if (this.state.expanded) {
+      if (message.replies && message.replies.length > 0) {
+        replies = (
+          <div className='col-xs-11 col-xs-offset-1'>
+            <Inbox
+              app={ this.props.app }
+              isReply={ true }
+              messages={ message.replies }
+              user={ this.props.user }
+              token={ this.props.token }
+              apiOptions={ this.props.apiOptions }
+            />
+          </div>
+        );
+      }
     }
+
+
 
     return (
       <article className={ `panel message-preview${readClass}` }>
-        <div className='panel-body'>
-          <div className='row'>
-            <div className='col-xs-12'>
-              { context }
+        <div className='panel-body' >
+          <div onClick={ this.toggleExpanded }>
+            <div className='row'>
+              <div className='col-xs-12'>
+                { context }
 
-              <time dateTime={ submitted.format() } className='text-muted pull-right text-right'>
-                { formattedSubmitted }
-              </time>
+                <time dateTime={ submitted.format() } className='text-muted pull-right text-right'>
+                  { formattedSubmitted }
+                </time>
 
-              { author }
+                { author }
+              </div>
+            </div>
+
+            <div className='row' >
+              <div className='col-xs-12'>
+                <div
+                  className='message-body vertical-spacing-top'
+                  dangerouslySetInnerHTML={ {__html: process(message.body)} }
+                />
+              </div>
+
+
             </div>
           </div>
 
-          <div className='row'>
-            <div className='col-xs-12'>
-              <div
-                className='message-body vertical-spacing-top'
-                dangerouslySetInnerHTML={ {__html: process(message.body)} }
-              />
-            </div>
-
-            { replies }
-
-            <div className='col-xs-12'>
-              { reply }
-            </div>
+          { replies }
+          <div className='col-xs-12'>
+            { reply }
           </div>
         </div>
       </article>

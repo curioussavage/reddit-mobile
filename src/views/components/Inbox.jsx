@@ -6,7 +6,7 @@ import BaseComponent from './BaseComponent';
 class Inbox extends BaseComponent {
   static propTypes = {
   };
-  
+
   constructor(props) {
     super(props);
 
@@ -53,6 +53,7 @@ class Inbox extends BaseComponent {
               <MessagePreview
                 app={ props.app }
                 lastReply={ isLastReply }
+                isReply={ props.isReply || false }
                 user={ props.user }
                 token={ props.token }
                 key={ `message-${m.name}` }
