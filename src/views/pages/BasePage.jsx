@@ -1,5 +1,6 @@
 import React from 'react';
 import isEqual from 'lodash/lang/isEqual';
+import has from 'lodash/object/has';
 
 import features from '../../featureflags';
 
@@ -13,7 +14,7 @@ class BasePage extends BaseComponent {
     data: React.PropTypes.object.isRequired,
     app: React.PropTypes.object.isRequired,
   };
-  
+
   constructor (props) {
     super(props);
 
@@ -57,7 +58,7 @@ class BasePage extends BaseComponent {
     }
 
     this.watchProperties();
-  } 
+  }
 
   watchProperties() {
     // Handle no-data error-page case
@@ -77,6 +78,7 @@ class BasePage extends BaseComponent {
 
   watch (property) {
     const promise = this.props.data.get(property);
+    const props = this.props;
 
     promise.then((p) => {
       let data;
@@ -97,7 +99,17 @@ class BasePage extends BaseComponent {
         });
 
         if (property === 'preferences') {
-          this.props.app.emit(constants.TOGGLE_OVER_18, p.body.over_18);
+          props.app.emit(constants.TOGGLE_OVER_18, p.body.over_18);
+        }
+
+        if (property === 'user' && has(props, 'ctx.query.loginAction')) {
+          // sending event here we lose referrer for login
+          const eventProps = {
+            ...props,
+            ...p.body,
+            sucessful: true,
+          };
+          props.app.emit(`${props.ctx.query.loginAction}:attempt`, eventProps);
         }
       } else {
         data = Object.assign({}, this.state.data);
@@ -105,7 +117,7 @@ class BasePage extends BaseComponent {
         data[property] = p;
 
         if (property === 'subreddit') {
-          this.props.app.emit(constants.SET_META_COLOR, p.key_color || constants.DEFAULT_KEY_COLOR);
+          props.app.emit(constants.SET_META_COLOR, p.key_color || constants.DEFAULT_KEY_COLOR);
         }
 
         this.setState({
@@ -121,8 +133,8 @@ class BasePage extends BaseComponent {
       // the promise.
       if (!promise.failed) {
         promise.failed = true;
-        this.props.app.error(e, this.props.ctx, this.props.app);
-        this.props.app.forceRender(this.props.ctx.body, this.props);
+        props.app.error(e, this.props.ctx, this.props.app);
+        props.app.forceRender(this.props.ctx.body, this.props);
       }
     });
   }

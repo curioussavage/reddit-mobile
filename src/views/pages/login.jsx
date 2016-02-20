@@ -1,6 +1,7 @@
 import React from 'react';
 import querystring from 'querystring';
 import has from 'lodash/object/has';
+import includes from 'lodash/collection/includes';
 import superagent from 'superagent';
 
 const T = React.PropTypes;
@@ -38,6 +39,32 @@ const PLACEHOLDER_TXT = {
     PASSWORD: 'Password',
   },
 };
+
+const EMAIL_ERRORS = [
+  'BAD_EMAIL',
+];
+
+const PASS_ERRORS = [
+  'PASSWORD_MATCH',
+  'WRONG_PASSWORD',
+  'SHORT_PASSWORD',
+  'BAD_PASSWORD',
+  'BAD_PASSWORD_MATCH',
+];
+
+const USER_ERRORS = [
+  'USER_DOESNT_EXIST',
+  'USERNAME_TAKEN',
+  'USERNAME_INVALID_CHARACTERS',
+  'USERNAME_TOO_SHORT',
+  'USERNAME_TAKEN_DEL',
+];
+
+const ERROR_TYPES = [
+  ...EMAIL_ERRORS,
+  ...USER_ERRORS,
+  ...PASS_ERRORS,
+];
 
 const terms = (
   <a
@@ -122,35 +149,13 @@ class LoginPage extends BasePage {
 
   parseError(error) {
     const err = {
-      username: false,
-      password: false,
-      email: false,
-      global: false,
+      username: includes(USER_ERRORS, error),
+      password: includes(PASS_ERRORS, error),
+      email: includes(EMAIL_ERRORS, error),
     };
 
-    if (error) {
-      switch (error) {
-        case 'EMAIL_NEWSLETTER':
-        case 'BAD_EMAIL':
-          err.email = true;
-          break;
-        case 'PASSWORD_MATCH':
-        case 'WRONG_PASSWORD':
-        case 'SHORT_PASSWORD':
-        case 'BAD_PASSWORD':
-        case 'BAD_PASSWORD_MATCH':
-          err.password = true;
-          break;
-        case 'USER_DOESNT_EXIST':
-        case 'USERNAME_TAKEN':
-        case 'USERNAME_INVALID_CHARACTERS':
-        case 'USERNAME_TOO_SHORT':
-        case 'USERNAME_TAKEN_DEL':
-          err.username = true;
-          break;
-        default:
-          err.global = true;
-      }
+    if (!includes(err, true)) {
+      err.global = true;
     }
 
     return err;
@@ -207,9 +212,9 @@ class LoginPage extends BasePage {
 
   async doAction(e) {
     e.preventDefault();
-    const props = this.props;
-    const uri = props.mode === LoginPage.modes.register ?
-      '/register' : '/login';
+    const { app, originalUrl, mode } = this.props;
+    const action = mode.toLowerCase();
+    const uri = `/${action}`;
 
     const { username, password, email } = this.state;
 
@@ -227,7 +232,6 @@ class LoginPage extends BasePage {
 
       // do some redirection here.
       if (res && res.body) {
-        const { app, originalUrl } = props;
         const { token } = res.body.token;
 
         app.setState('ctx', {
@@ -238,7 +242,13 @@ class LoginPage extends BasePage {
 
         app.setTokenRefresh(app, token.expires_at);
 
-        app.redirect(originalUrl || '/');
+        const loginFlag = `loginAction=${action}`;
+        if (originalUrl) {
+          const success = includes(originalUrl, '?') ?
+            `&${loginFlag}` : `?${loginFlag}`;
+          return app.redirect(`${originalUrl}${success}`);
+        }
+        app.redirect(`/?loginAction=success`);
       }
     } catch (e) {
       // Timeout just gives us a stupid error object
@@ -248,6 +258,19 @@ class LoginPage extends BasePage {
         delete e.message;
       }
       this.handleErrors(e);
+
+      const eventProps = {
+        ...this.props,
+        name: username,
+        process_notes: includes(ERROR_TYPES, e.error) ? e.error : null,
+        successful: false,
+      };
+
+      if (email) {
+        eventProps.email = email;
+      }
+
+      app.emit(`${action}:attempt`, eventProps);
     }
   }
 

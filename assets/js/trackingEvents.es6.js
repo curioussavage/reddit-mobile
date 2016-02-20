@@ -195,6 +195,38 @@ function trackingEvents(app) {
     return data;
   }
 
+  function addIfPresent(obj, name, prop) {
+    if (prop) {
+      obj[name] = prop;
+    }
+  }
+
+  function buildLoginData(props) {
+    const payload = {
+      domain: window.location.host,
+      geoip_country: props.country || null,
+      successful: props.successful,
+      user_agent: props.ctx.userAgent,
+      user_name: props.name,
+      loid: props.loid,
+      loid_created: props.loidcreated,
+    };
+
+    addIfPresent(payload, 'process_notes', props.process_notes);
+    addIfPresent(payload, 'email', props.email);
+
+    // originalUrl can only be a relative url
+    if (props.originalUrl) {
+      payload.referrer_domain = payload.domain;
+      payload.referrer_url = payload.domain + props.originalUrl;
+    } else if (props.ctx.referrer) {
+      payload.referrer_domain = url.parse(props.ctx.referrer).host;
+      payload.referrer_url = props.ctx.referrer;
+    }
+
+    return payload;
+  }
+
   app.on('pageview', function(props) {
     const payload = buildPageviewData(props);
     eventSend('screenview_events', 'cs.screenview', payload);
@@ -237,6 +269,18 @@ function trackingEvents(app) {
   app.on('compactToggle', function (compact) {
     gaSend('send', 'event', 'compactToggle', compact.toString());
     gaSend('set', 'dimension3', compact.toString());
+  });
+
+  app.on('login:attempt', function(props) {
+    const payload = buildLoginData(props);
+    eventSend('login_events', 'cs.login_attempt', payload);
+    gaSend('send', 'event', 'login', 'attempt');
+  });
+
+  app.on('register:attempt', function(props) {
+    const payload = buildLoginData(props);
+    eventSend('login_events', 'cs.register_attempt', payload);
+    gaSend('send', 'event', 'login', 'attempt');
   });
 
   app.on('vote', function(vote) {

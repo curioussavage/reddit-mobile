@@ -436,9 +436,9 @@ const oauthRoutes = function(app) {
   }
 
   async function getLoginRedirectOrRes(username, passwd, ctx) {
+    const dest = ctx.body.originalUrl || '';
     try {
       const result = await login(username, passwd, ctx);
-      const dest = ctx.body.originalUrl || '';
 
       if (result.status === 200) {
         if (ctx.isAjax) {
@@ -447,9 +447,11 @@ const oauthRoutes = function(app) {
         }
 
         if (dest) {
-          return `${app.config.origin}${dest}`;
+          const char = dest.indexOf('?') === -1 ? '?' : '&';
+          const path = `${dest}${char}loginAction=${ctx.action}`;
+          return `${app.config.origin}${path}`;
         }
-        return '/';
+        return `/?loginAction=${ctx.action}`;
       }
     } catch (e) {
       if (ctx.isAjax) {
@@ -466,7 +468,8 @@ const oauthRoutes = function(app) {
       }
 
       const message = e.message ? `&message=${e.message}` : '';
-      return `/login?error=${e.errorType}${message}`;
+      const orginalUrl = dest ? `&originalUrl=${dest}` : '';
+      return `/login?error=${e.errorType}${message}${orginalUrl}`;
     }
   }
 
@@ -499,8 +502,10 @@ const oauthRoutes = function(app) {
           resolve();
         }
 
+        const dest = ctx.body.originalUrl;
+        const originalUrl = dest ? `&originalUrl=${dest}` : '';
         const message = obj.message ? `&message=${obj.message}` : '';
-        return reject(`/login?error=${obj.errorType}${message}`);
+        return reject(`/login?error=${obj.errorType}${message}${originalUrl}`);
       }
 
       const redirectURIOrRes = await getLoginRedirectOrRes(data.user, data.passwd, ctx);
@@ -516,7 +521,8 @@ const oauthRoutes = function(app) {
   router.post('/login', function * () {
     const { username, password } = this.body;
 
-    this.isAjax = this.type === 'application/json';
+    this.isAjax = this.req.headers['content-type'] === 'application/json';
+    this.action = 'login';
 
     const urlOrRes = yield getLoginRedirectOrRes(username, password, this);
     if (this.isAjax) {
@@ -531,7 +537,8 @@ const oauthRoutes = function(app) {
     const endpoint = `${origin}/api/register`;
     const { password, username, email } = this.body;
 
-    this.isAjax = this.type === 'application/json';
+    this.isAjax = this.req.headers['content-type'] === 'application/json';
+    this.action = 'register';
 
     const data = {
       user: username,
