@@ -51,6 +51,8 @@ class Inbox extends BaseComponent {
 
             return (
               <MessagePreview
+                showSubject={ props.showSubject || false }
+                view={ props.view }
                 app={ props.app }
                 lastReply={ isLastReply }
                 isReply={ props.isReply || false }

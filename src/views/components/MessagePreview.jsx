@@ -1,6 +1,8 @@
 import React from 'react';
 import { models } from 'snoode';
 import moment from 'moment';
+import includes from 'lodash/collection/includes';
+
 import process from 'reddit-text-js';
 import SquareButton from './formElements/SquareButton';
 
@@ -133,8 +135,8 @@ class MessagePreview extends BaseComponent {
   }
 
   render () {
-    const message = this.props.message;
     const props = this.props;
+    const { message, view, user, isReply, showSubject } = props;
 
     const submitted = moment(message.created_utc * 1000);
     let formattedSubmitted;
@@ -146,7 +148,7 @@ class MessagePreview extends BaseComponent {
     }
 
     const readClass = message.new ? ' message-unread' : '';
-    const isMine = message.author === props.user.name;
+    const isMine = message.author === user.name;
 
     let context;
     let subreddit;
@@ -177,21 +179,25 @@ class MessagePreview extends BaseComponent {
           </a>
         </h3>
       );
-    } else if (message.subreddit) {
+    } else if (message.subreddit && !isReply) {
+      const sub = message.subreddit;
+      const href = includes(view, 'moderator') ?
+        `/r/${sub}/message/moderator` : `/r/${sub}`;
       context = (
         <h3 className='message-title'>
-          <a href={ `/r/${ message.subreddit }` }>
-            { `r/${message.subreddit}` }
+          <a href={ href }>
+            { `r/${sub}` }
           </a>
         </h3>
       );
-    } else if (message.subject) {
-      context = (
+    }
+
+    const subject = message.subject && showSubject ?
+      (
         <h3 className='message-title'>
           { message.subject }
         </h3>
-      );
-    }
+      ) : null;
 
     let author;
 
@@ -244,12 +250,11 @@ class MessagePreview extends BaseComponent {
           <div onClick={ this.toggleExpanded }>
             <div className='row'>
               <div className='col-xs-12'>
-                { context }
-
                 <time dateTime={ submitted.format() } className='text-muted pull-right text-right'>
                   { formattedSubmitted }
                 </time>
-
+                { context }
+                { subject }
                 { author }
               </div>
             </div>
@@ -261,8 +266,6 @@ class MessagePreview extends BaseComponent {
                   dangerouslySetInnerHTML={ {__html: process(message.body)} }
                 />
               </div>
-
-
             </div>
           </div>
 

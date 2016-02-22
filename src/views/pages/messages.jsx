@@ -10,7 +10,7 @@ class MessagesPage extends BasePage {
     data: React.PropTypes.object,
     view: React.PropTypes.string.isRequired,
   };
-  
+
   get track () {
     return 'messages';
   }
@@ -29,6 +29,8 @@ class MessagesPage extends BasePage {
 
       content = (
         <Inbox
+          showSubject={ true }
+          view={ this.props.view }
           app={ this.props.app }
           messages={ messages }
           key={ `mesages-${view}` }
