@@ -4,6 +4,7 @@ import BasePage from './BasePage';
 import MessageNav from '../components/MessageNav';
 import Inbox from '../components/Inbox';
 import Loading from '../components/Loading';
+import MessageSideNav from '../components/messageSideNav';
 
 class MessagesPage extends BasePage {
   static propTypes = {
@@ -18,6 +19,7 @@ class MessagesPage extends BasePage {
   render() {
     let content;
     let view;
+    let sideNav;
 
     if (!this.state.loaded || !this.state.data.messages) {
       content = (
@@ -26,6 +28,12 @@ class MessagesPage extends BasePage {
     } else {
       const messages = this.state.data.messages;
       view = this.props.view.toLowerCase();
+
+      if (view === 'moderator') {
+        sideNav = (
+          <MessageSideNav props={ this.props } />
+        );
+      }
 
       content = (
         <Inbox
@@ -45,6 +53,7 @@ class MessagesPage extends BasePage {
       <div className={ `message-page message-${view}` }>
         <div>
           <MessageNav {...this.props} user={ this.state.data.user } />
+          { sideNav }
           { content }
         </div>
       </div>
