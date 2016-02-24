@@ -6,6 +6,8 @@ import Inbox from '../components/Inbox';
 import Loading from '../components/Loading';
 import MessageSideNav from '../components/messageSideNav';
 
+import includes from 'lodash/collection/includes';
+
 class MessagesPage extends BasePage {
   static propTypes = {
     data: React.PropTypes.object,
@@ -29,23 +31,28 @@ class MessagesPage extends BasePage {
       const messages = this.state.data.messages;
       view = this.props.view.toLowerCase();
 
-      if (view === 'moderator') {
-        sideNav = (
-          <MessageSideNav props={ this.props } />
-        );
-      }
+      const viewType = includes(view, 'moderator') ? 'moderator' : 'user';
+      sideNav = (
+        <MessageSideNav 
+          props={ this.props }
+          subreddit= { this.props.subreddit }
+          inboxType={ viewType }
+        />
+      );
 
       content = (
-        <Inbox
-          showSubject={ true }
-          view={ this.props.view }
-          app={ this.props.app }
-          messages={ messages }
-          key={ `mesages-${view}` }
-          user={ this.state.data.user }
-          token={ this.props.token }
-          apiOptions={ this.props.apiOptions }
-        />
+        <div className='message__wrapper' >
+          <Inbox
+            showSubject={ true }
+            view={ this.props.view }
+            app={ this.props.app }
+            messages={ messages }
+            key={ `mesages-${view}` }
+            user={ this.state.data.user }
+            token={ this.props.token }
+            apiOptions={ this.props.apiOptions }
+          />
+        </div>
       );
     }
 

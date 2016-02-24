@@ -5,6 +5,7 @@ import querystring from 'querystring';
 import superagent from 'superagent';
 
 import merge from 'lodash/object/merge';
+import includes from 'lodash/collection/includes';
 import url from 'url';
 
 // components
@@ -817,6 +818,15 @@ function routes(app) {
       title: 'Messages',
       metaDescription: 'user messages at reddit.com',
     });
+
+    if (includes(view, 'moderator')) {
+      const subOptions = buildAPIOptions(ctx, { 
+        query: {
+          sort: 'mine/moderator',
+        }
+      }
+      setData(ctx, 'subreddit', 'subreddits', subOpts);
+    }
 
     const listingOpts = buildAPIOptions(ctx, {
       view: props.view,
