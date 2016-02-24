@@ -820,12 +820,13 @@ function routes(app) {
     });
 
     if (includes(view, 'moderator')) {
-      const subOptions = buildAPIOptions(ctx, { 
+      const subOptions = buildAPIOptions(ctx, {
         query: {
           sort: 'mine/moderator',
-        }
-      }
-      setData(ctx, 'subreddit', 'subreddits', subOpts);
+        },
+      });
+
+      setData(ctx, 'subreddit', 'subreddits', subOptions);
     }
 
     const listingOpts = buildAPIOptions(ctx, {
@@ -841,8 +842,8 @@ function routes(app) {
     this.body = makeBody(MessagesPage);
   }
 
-  router.get('messages', '/r/:subreddit/message/:view', messages);
-  router.get('messages', '/message/:view', messages);
+  router.get('messages', '/r/:subreddit/message/:view/:filter?', messages);
+  router.get('messages', '/message/:view/:filter?', messages);
 
   function * wikiPage() {
     // const path = this.params.wikiPath || 'index';  //this.params[0].substr(1) || 'index';

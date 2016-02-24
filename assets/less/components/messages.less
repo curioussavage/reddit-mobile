@@ -1,5 +1,6 @@
 .message__wrapper {
   display: inline-block;
+  width: 85%;
 }
 
 .message-title, .message-title a,
@@ -80,4 +81,25 @@
   height: 40px;
   max-width: 400px;
   // margin: 0 auto;
+}
+
+
+.tabs__wrapper {
+  position: relative;
+  top: 1px;
+  margin-top: 10px;
+  margin-left: 15%;
+}
+
+.tabs__tab {
+  border-top: @gray-border;
+  border-left: @gray-border;
+  border-right: @gray-border;
+  margin-right: 3px;
+  display: inline-block;
+  padding: 5px 2%;
+}
+
+.tabs__tab.active {
+  background-color: @white;
 }

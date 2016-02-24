@@ -14,35 +14,35 @@ const USER_MENU = [
   { link: 'mentions', title: 'username mentions' },
 ];
 
-const INBOX_MENU = BASE_MENU.concat(USER_MENU); 
+const INBOX_MENU = BASE_MENU.concat(USER_MENU);
 
 class MessageSideNav extends BaseComponent {
   static propTypes = {
 
   };
 
-  renderMenuItem(sub) {
-    const subPath = sub ? `/${sub}` : '';
-    return (curr, index) => {
-      const path = curr.link === 'all' ? '' : curr.link;
-      const link = `${subPath}/messages/${curr.link}`;
+  renderMenuItem(path) {
+    return (curr) => {
+      const linkPath = curr.link === 'all' ? '' : curr.link;
+      const link = `${path}/${linkPath}`;
       return (
         <li>
           <a href={ link } data-no-route='true'>{ curr.text || curr.link } </a>
         </li>
       );
-    }
+    };
   }
 
   render() {
     const props = this.props;
 
-    const items = props.inboxType === 'moderator' ? 
-      BASE_MENU.map(this.renderMenuItem(props.subreddit)) : INBOX_MENU.map(this.renderMenuItem(props.subreddit));
+    const list = props.inboxType === 'moderator' ? BASE_MENU : INBOX_MENU;
+    const items = list.map(this.renderMenuItem(props.ctx.path));
 
     return (
       <div className='messageSidenav'>
-        <ul>
+        <p className='messageSidenav__label'>Filters</p>
+        <ul className='messageSidenav__nav-list'>
           { items }
         </ul>
       </div>
