@@ -223,6 +223,20 @@ function trackingEvents(app) {
     return payload;
   }
 
+  function buildCommentData(props) {
+    const { subreddit, author, name } = props.comment;
+    const payload = {
+      ...getBasePayload(props),
+      user_name: author,
+      sr_name: subreddit,
+      comment_fullname: name,
+    };
+
+    addIfPresent();
+
+    return payload;
+  }
+
   app.on('pageview', function(props) {
     const payload = buildPageviewData(props);
     eventSend('screenview_events', 'cs.screenview', payload);
@@ -277,9 +291,12 @@ function trackingEvents(app) {
     gaSend('send', 'event', 'vote', vote.get('direction'));
   });
 
-  app.on('comment', function (comment) {
-    if (comment.text) {
-      gaSend('send', 'event', 'comment', 'words', comment.text.match(/\S+/g).length);
+  app.on('comment:new', function (props) {
+    const payload = buildCommentData(props);
+    eventSend('comment_events', 'cs.comment', payload);
+
+    if (props.comment.text) {
+      gaSend('send', 'event', 'comment', 'words', props.comment.text.match(/\S+/g).length);
     }
   });
 

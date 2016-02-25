@@ -144,6 +144,8 @@ export default class Comment extends BaseComponent {
   }
 
   async submitReply() {
+    const { app } = this.props;
+
     if (this.props.app.needsToLogInUser()) { return; }
 
     try {
@@ -155,7 +157,12 @@ export default class Comment extends BaseComponent {
         }),
       };
 
-      const newComment = await this.props.app.api.comments.post(options);
+      const newComment = await app.api.comments.post(options);
+
+      app.emit('comment:new', {
+        ...this.props,
+        comment: newComment,
+      });
 
       this.setState({
         commentReplies: [newComment].concat(this.state.commentReplies),
