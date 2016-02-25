@@ -25,6 +25,7 @@ import UserSavedPage from './views/pages/userSaved';
 import FAQPage from './views/pages/faq';
 import LoginPage from './views/pages/login';
 import RegisterPage from './views/pages/register';
+import ModPage from './views/pages/modPage';
 import MessagesPage from './views/pages/messages';
 import MessageComposePage from './views/pages/messageCompose';
 import SubmitPage from './views/pages/submit';
@@ -889,6 +890,24 @@ function routes(app) {
 
   router.get('wiki.subreddit', '/r/:subreddit/wiki/:wikiPath(.*)?', wikiPage);
   router.get('wiki', '/wiki/:wikiPath(.*)?', wikiPage);
+
+  router.get('modqueue', '/r/:subreddit/moderation/:modPath?', function *() {
+
+    const { subreddit, modPath } = this.params;
+    const options = buildAPIOptions(this, {
+      query: {},
+      subreddit,
+      modPath,
+    });
+
+    this.props.data.set('modqueue', app.api.modListings.get(options));
+
+    Object.assign(this.props, this.params, {
+      page: parseInt(this.query.page) || 0,
+    });
+
+    this.body = makeBody(ModPage);
+  });
 
 
   router.get('404', '*', function *() {
