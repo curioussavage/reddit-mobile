@@ -21,13 +21,18 @@ class MessageSideNav extends BaseComponent {
 
   };
 
-  renderMenuItem(path) {
-    return (curr) => {
+  renderMenuItem(isMod) {
+    const props = this.props;
+    const { subreddit } = props;
+    const sub = subreddit ? `/r/${subreddit}` : '';
+    const modPath = isMod ? 'moderator/' : '';
+
+    return (curr, i) => {
       const linkPath = curr.link === 'all' ? '' : curr.link;
-      const link = `${path}/${linkPath}`;
+      const link = `${sub}/message/${modPath}${linkPath}`;
       return (
-        <li>
-          <a href={ link } data-no-route='true'>{ curr.text || curr.link } </a>
+        <li key={ `${curr}-${i}` }>
+          <a href={ link } data-no-route='true'>{ curr.title || curr.link } </a>
         </li>
       );
     };
@@ -35,9 +40,10 @@ class MessageSideNav extends BaseComponent {
 
   render() {
     const props = this.props;
+    const isMod = props.inboxType === 'moderator';
 
-    const list = props.inboxType === 'moderator' ? BASE_MENU : INBOX_MENU;
-    const items = list.map(this.renderMenuItem(props.ctx.path));
+    const list = isMod ? BASE_MENU : INBOX_MENU;
+    const items = list.map(this.renderMenuItem(isMod));
 
     return (
       <div className='messageSidenav'>

@@ -24,7 +24,7 @@ class ListingList extends BaseComponent {
     showAds: Proptypes.bool,
     showHidden: Proptypes.bool,
   };
-  
+
   constructor(props) {
     super(props);
 
@@ -139,22 +139,35 @@ class ListingList extends BaseComponent {
     const length = props.listings.length;
     const compact = this.state.compact;
 
+    const Wrapper = props.wrapper;
+
     const listings = (
       props.listings.map(function(listing, i) {
         const index = (page * 25) + i;
 
         if (listing._type === 'Comment') {
-          return (
+
+          const commentEl = (
             <CommentPreview
               comment={ listing }
               key={ `page-comment-${index}` }
               page={ page }
             />
           );
+
+          if (Wrapper) {
+            return (
+              <Wrapper index={ index }>
+                { commentEl }
+              </Wrapper>
+            );
+          }
+
+          return commentEl;
         }
 
         if (props.showHidden || !listing.hidden) {
-          return (
+          const linkEl = (
             <Listing
               index={ index }
               key={ `page-listing-${index}` }
@@ -166,6 +179,16 @@ class ListingList extends BaseComponent {
               compact={ compact }
             />
           );
+
+          if (Wrapper) {
+            return (
+              <Wrapper index={ index }>
+                { linkEl }
+              </Wrapper>
+            );
+          }
+
+          return linkEl;
         }
       })
     );

@@ -27,24 +27,9 @@ function MessageNav (props) {
         <a
           className='TextSubNav-a'
           href='/message/inbox'
-        >All</a>
+        >Mail</a>
       </li>
-
-      <li className={ `TextSubNav-li ${view === 'messages' ? 'active' : ''}` }>
-        <a
-          className='TextSubNav-a'
-          href='/message/messages'
-        >Messages</a>
-      </li>
-
       { modMailLink }
-      <li className={ `TextSubNav-li ${view === 'mentions' ? 'active' : ''}` }>
-        <a
-          className='TextSubNav-a'
-          href='/message/mentions'
-        >Mentions</a>
-      </li>
-
       <li className={ `TextSubNav-li TextSubNav-icon-li ${view === 'compose' ? 'active' : ''}` }>
         <a
           className='TextSubNav-a'

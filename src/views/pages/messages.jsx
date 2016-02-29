@@ -13,6 +13,7 @@ class MessagesPage extends BasePage {
     super(props);
 
     this.makeSubTabs = this.makeSubTabs.bind(this);
+    this.goToModmailSub = this.goToModmailSub.bind(this);
   }
   static propTypes = {
     data: React.PropTypes.object,
@@ -24,13 +25,20 @@ class MessagesPage extends BasePage {
   }
 
   makeSubTabs(sub) {
-    const active = this.props.subreddit === sub.display_name ?
-      'active' : '';
+    const { subreddit } = this.props;
+    const selected = (subreddit && subreddit === sub.display_name) ||
+                     (!subreddit && sub.display_name === 'All') ? true : false;
+    const subPath = sub.display_name !== 'All' ? `/r/${sub.display_name}` : '';
     return (
-      <div className={ `tabs__tab ${active}` }>
-        <a href={ `/r/${sub.display_name}/message/moderator` }>{ sub.display_name }</a>
-      </div>
+      <option selected={ selected }>
+        <a href={ `${subPath}/message/moderator` }>{ sub.display_name }</a>
+      </option>
     );
+  }
+
+  goToModmailSub(e) {
+    const sub = e.currentTarget.value;
+    this.props.app.redirect(`/r/${sub}/message/moderator`);
   }
 
   render() {
@@ -53,20 +61,23 @@ class MessagesPage extends BasePage {
       sideNav = (
         <MessageSideNav
           { ...this.props }
-          subreddit= { this.props.subreddit }
+          subreddit= { subreddit }
           inboxType={ viewType }
         />
       );
 
       if (viewType === 'moderator') {
-        const subs = this.state.data.subreddit || [];
+        const subs = (this.state.data.subreddit || []).slice();
+
+        subs.unshift({ display_name: 'All'});
+
         const subTabs = subs.map(this.makeSubTabs);
         tabs = (
           <div className='tabs__wrapper' >
-            <div className={ `tabs__tab ${subreddit ? '' : 'active'}` }>
-              <a href='/message/moderator'>All</a>
-            </div>
-            { subTabs }
+            <span>Subreddit</span>
+            <select onChange={ this.goToModmailSub }>
+              { subTabs }
+            </select>
           </div>
         );
       }
@@ -89,8 +100,8 @@ class MessagesPage extends BasePage {
 
     return (
       <div className={ `message-page message-${view}` }>
-        <div>
-          <MessageNav {...this.props} user={ this.state.data.user } />
+        <MessageNav {...this.props} user={ this.state.data.user } />
+        <div className='container'>
           { tabs }
           { sideNav }
           { content }

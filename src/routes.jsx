@@ -809,7 +809,7 @@ function routes(app) {
       return this.redirect(`/login?${querystring.stringify(query)}`);
     }
 
-    const { view, subreddit } = this.params;
+    const { view, subreddit, filter } = this.params;
 
     const ctx = this;
 
@@ -836,6 +836,10 @@ function routes(app) {
 
     if (subreddit) {
       listingOpts.subreddit = subreddit;
+    }
+
+    if (filter) {
+      listingOpts.filter = filter;
     }
 
     this.props.data.set('messages', app.api.messages.get(listingOpts));
