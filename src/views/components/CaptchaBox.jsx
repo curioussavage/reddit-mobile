@@ -39,7 +39,7 @@ class CaptchaBox extends BaseComponent {
   }
 
   requestCaptcha() {
-    const api = this.props.app.api;
+    const api = this.props.api;
 
     const options = api.buildOptions(this.props.apiOptions);
     options.form = {};
