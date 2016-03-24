@@ -32,4 +32,4 @@ start.sh
 workspace.json
 .DS_Store
 .idea
-
+.vscode/*
