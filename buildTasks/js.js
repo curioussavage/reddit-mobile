@@ -1,7 +1,6 @@
 'use strict';
 
 var combiner = require('stream-combiner2');
-var gutil = require('gulp-util');
 var uglify = require('gulp-uglify');
 var streamify = require('gulp-streamify');
 var rev = require('gulp-rev');
@@ -14,10 +13,11 @@ var browserify = require('browserify');
 var watchify = require('watchify');
 var babelify = require('babelify');
 var envify = require('envify/custom');
-var exorcist = require('exorcist');
 var path = require('path');
 var gulpIf = require('gulp-if');
 var livereload = require('gulp-livereload');
+var sourcemaps = require('gulp-sourcemaps');
+var plumber = require('gulp-plumber');
 
 var notify = require('./utils/notify');
 
@@ -99,9 +99,8 @@ module.exports = function buildJS(gulp, options) {
     var rebundle = function() {
       if (bundling) {
         return;
-      } else {
-        bundling = true;
       }
+      bundling = true;
 
       notify({
         message: 'Starting js...',
@@ -112,7 +111,7 @@ module.exports = function buildJS(gulp, options) {
       var error = false;
       var combined = combiner.obj([
         stream,
-        //exorcist(buildjs + '/client.js.map'),
+        plumber(),
         source(entryFile),
         rename('client.js'),
         gulp.dest(buildjs),
@@ -120,7 +119,9 @@ module.exports = function buildJS(gulp, options) {
         rename('client.min.js'),
         gulp.dest(buildjs),
         buffer(),
-        rev(),
+        sourcemaps.init({ loadMaps: true }),
+          rev(),
+        sourcemaps.write('./', { sourceRoot: entryFile }),
         gulp.dest(buildjs),
         rev.manifest(),
         rename('client-manifest.json'),
@@ -133,8 +134,6 @@ module.exports = function buildJS(gulp, options) {
               });
             }
 
-            if (cb) { cb(); };
-            cb = null;
             bundling = false;
             error = false;
           }),
@@ -143,13 +142,15 @@ module.exports = function buildJS(gulp, options) {
       // only catch errors in debug mode,
       // otherwise prod builds won't fail
       //if (options.debug) {
-        combined
-          .on('error', function(e) {
-            error = true;
-            notify(e);
-          });
+      combined
+        .on('error', function(e) {
+          error = true;
+          bundling = false;
+          notify(e);
+          this.emit('end');
+        });
       //}
-    }
+    };
 
     bundler.on('update', rebundle);
     return rebundle();
