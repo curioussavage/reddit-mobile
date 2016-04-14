@@ -232,7 +232,7 @@ function trackingEvents(app) {
     };
   }
 
-  function stripPrefix(str) {
+  function stripPrefix(str='') {
     return str.replace(/(t[1-8]_)\w/, '');
   }
 
