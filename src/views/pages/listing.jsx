@@ -207,7 +207,7 @@ class ListingPage extends BasePage {
     }
 
     if (subreddit && subreddit.user_is_banned) {
-      message = <p>You are banned from commenting</p>;
+      message = <p>You are banned from commenting in this community for now</p>;
     }
 
     if (listing.locked) {

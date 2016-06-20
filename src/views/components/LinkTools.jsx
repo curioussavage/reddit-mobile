@@ -126,6 +126,8 @@ export default class LinkTools extends React.Component {
   }
 
   renderTools() {
+    const text = this.props.disableReply ? '' : 'Write a comment';
+
     return (
       <div className='LinkTools__tools'>
         { this.renderSort() }
@@ -133,7 +135,7 @@ export default class LinkTools extends React.Component {
           className='LinkTools__comment'
           onClick={ this.toggleForm }
         >
-          Write a comment
+          { text }
         </div>
       </div>
     );
