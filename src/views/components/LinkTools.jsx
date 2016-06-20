@@ -47,8 +47,7 @@ export default class LinkTools extends React.Component {
   }
 
   toggleForm() {
-    if (this.props.isArchived) { return; }
-    if (this.props.isLocked) { return; }
+    if (this.props.disableReply) { return; }
     if (this.props.app.needsToLogInUser()) { return; }
 
     this.setState({
@@ -127,14 +126,6 @@ export default class LinkTools extends React.Component {
   }
 
   renderTools() {
-    const { isArchived, isLocked } = this.props;
-    let text = 'Write a comment';
-    if (isArchived) {
-      text = 'Post is archived';
-    } else if (isLocked) {
-      text = 'Comments are locked';
-    }
-
     return (
       <div className='LinkTools__tools'>
         { this.renderSort() }
@@ -142,7 +133,7 @@ export default class LinkTools extends React.Component {
           className='LinkTools__comment'
           onClick={ this.toggleForm }
         >
-          { text }
+          Write a comment
         </div>
       </div>
     );
