@@ -590,7 +590,7 @@ export default class Comment extends BaseComponent {
     return (
       <div className='Comment__replyForm'>
         <div className='Comment__replyFormLocked'>
-          You are currently banned
+          You are banned from commenting in this community for now.
         </div>
       </div>
     );
