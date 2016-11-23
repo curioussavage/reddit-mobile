@@ -25,6 +25,7 @@ const {
   VARIANT_XPROMO_LISTING,
   VARIANT_XPROMO_SUBREDDIT,
   VARIANT_XPROMO_CLICK,
+  VARIANT_TITLE_EXPANDO,
 } = flagConstants;
 
 const config = {
@@ -204,6 +205,12 @@ const config = {
       ] },
     ],
   },
+  [VARIANT_TITLE_EXPANDO]: {
+    and: [
+      { compact: true},
+      { variant: 'mweb_post_title_expando:active'},
+    ],
+  },
 };
 
 const flags = new Flags(config);
@@ -245,6 +252,10 @@ flags.addRule('url', function(query) {
   // turns { feature_thing: true, wat: 7 } into { thing: true }
   const parsedQuery = Flags.parseConfig(this.state.platform.currentPage.queryParams);
   return Object.keys(parsedQuery).includes(query);
+});
+
+flags.addRule('compact', function(val) {
+  return this.state.compact === val;
 });
 
 flags.addRule('subreddit', function (name) {

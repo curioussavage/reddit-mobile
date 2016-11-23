@@ -19,6 +19,13 @@ import PostHeader from './PostHeader';
 import PostContent from './PostContent';
 import PostFooter from './PostFooter';
 
+import { featuresSelector } from 'app/selectors/features';
+import { flags } from 'app/constants'; 
+
+const { 
+  VARIANT_TITLE_EXPANDO,
+} = flags;
+
 const T = React.PropTypes;
 
 function _isCompact(props) {
@@ -77,6 +84,7 @@ export function Post(props) {
     editing,
     editPending,
     expanded,
+    feature,
     user,
     single,
     hideSubredditLabel,
@@ -147,6 +155,7 @@ export function Post(props) {
   }
 
   const postCssClass = `Post ${compact ? 'size-compact' : 'size-default'}`;
+  const canExpand = post.preview && post.preview.images.length || post.oembed; 
 
   return (
     <article className={ postCssClass } style={ { zIndex: z} }>
@@ -164,6 +173,8 @@ export function Post(props) {
           renderMediaFullbleed={ renderMediaFullbleed }
           showLinksInNewTab={ showLinksInNewTab }
           onElementClick={ onElementClick }
+          titleOpensExpando={ feature.enabled(VARIANT_TITLE_EXPANDO) && canExpand }
+          onTapExpand={ toggleExpanded }
         />
       </div>
       { contentOrNil }
@@ -193,7 +204,8 @@ const selector = createSelector(
   (state, props) => !!state.expandedPosts[props.postId],
   (state, props) => !!state.unblurredPosts[props.postId],
   (state, props) => state.editingText[props.postId],
-  (user, postId, single, compact, post, expanded, unblurred, editingState) => {
+  featuresSelector,
+  (user, postId, single, compact, post, expanded, unblurred, editingState, feature) => {
     const editing = !!editingState;
     const editPending = editing && editingState.pending;
 
@@ -207,6 +219,7 @@ const selector = createSelector(
       unblurred,
       editing,
       editPending,
+      feature,
     };
   }
 );
