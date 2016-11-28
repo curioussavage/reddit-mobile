@@ -155,7 +155,7 @@ export function Post(props) {
   }
 
   const postCssClass = `Post ${compact ? 'size-compact' : 'size-default'}`;
-  const canExpand = post.preview && post.preview.images.length || post.oembed; 
+  const canExpand = post.preview && post.preview.images.length > 0 || !!post.oembed; 
 
   return (
     <article className={ postCssClass } style={ { zIndex: z} }>

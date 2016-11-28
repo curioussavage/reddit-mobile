@@ -346,17 +346,16 @@ function renderPostTitleLink(post, showLinksInNewTab, onElementClick,
   }
 
   props.onClick = e => {
-    e.preventDefault();
     if (titleOpensExpando) {
+      e.preventDefault();
       onTapExpand(); 
     }
 
     onElementClick();
-  }; 
+  };
 
-  const anchorProps = { ...props, onClick: onElementClick };
   return (
-    <Anchor { ...anchorProps }>
+    <Anchor { ...props }>
       { title }
     </Anchor>
   );
