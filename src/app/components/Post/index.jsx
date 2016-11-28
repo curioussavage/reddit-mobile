@@ -19,7 +19,7 @@ import PostHeader from './PostHeader';
 import PostContent from './PostContent';
 import PostFooter from './PostFooter';
 
-import { featuresSelector } from 'app/selectors/features';
+import features from 'app/featureFlags';
 import { flags } from 'app/constants'; 
 
 const { 
@@ -84,11 +84,11 @@ export function Post(props) {
     editing,
     editPending,
     expanded,
-    feature,
     user,
     single,
     hideSubredditLabel,
     hideWhen,
+    inTitleExpandoExp,
     userActivityPage,
     onToggleEdit,
     onToggleSavePost,
@@ -173,7 +173,7 @@ export function Post(props) {
           renderMediaFullbleed={ renderMediaFullbleed }
           showLinksInNewTab={ showLinksInNewTab }
           onElementClick={ onElementClick }
-          titleOpensExpando={ feature.enabled(VARIANT_TITLE_EXPANDO) && canExpand }
+          titleOpensExpando={ inTitleExpandoExp && canExpand }
           onTapExpand={ toggleExpanded }
         />
       </div>
@@ -204,8 +204,8 @@ const selector = createSelector(
   (state, props) => !!state.expandedPosts[props.postId],
   (state, props) => !!state.unblurredPosts[props.postId],
   (state, props) => state.editingText[props.postId],
-  featuresSelector,
-  (user, postId, single, compact, post, expanded, unblurred, editingState, feature) => {
+  state => features.withContext({ state }).enabled(VARIANT_TITLE_EXPANDO),
+  (user, postId, single, compact, post, expanded, unblurred, editingState, inTitleExpandoExp) => {
     const editing = !!editingState;
     const editPending = editing && editingState.pending;
 
@@ -219,7 +219,7 @@ const selector = createSelector(
       unblurred,
       editing,
       editPending,
-      feature,
+      inTitleExpandoExp,
     };
   }
 );
