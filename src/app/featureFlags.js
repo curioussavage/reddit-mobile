@@ -26,6 +26,7 @@ const {
   VARIANT_XPROMO_SUBREDDIT,
   VARIANT_XPROMO_CLICK,
   VARIANT_TITLE_EXPANDO,
+  VARIANT_MIXED_VIEW,
 } = flagConstants;
 
 const config = {
@@ -209,6 +210,12 @@ const config = {
     and: [
       { compact: true},
       { variant: 'mweb_post_title_expando:active'},
+    ],
+  },
+  [VARIANT_MIXED_VIEW]: {
+    and: [
+      { compact: true },
+      { variant: 'mweb_mixed_view:active'},
     ],
   },
 };
