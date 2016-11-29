@@ -11,10 +11,10 @@
 ### Configuring your dev envirnoment
 
 Create a file in the root called `start.sh` and make it executable `chmod +x start.sh`.
-This file is automatically ignore by git and you can use it to start the server instead
+This file is automatically ignore by git and you can use it to define environment variables start the server instead
 of `npm run`.
 
-#### Example
+#### Example start.sh
 
 ```sh
 #!/bin/bash
@@ -31,3 +31,14 @@ MINIFY_ASSETS="false" \
 STATSD_DEBUG="true" \
 npm run dev-server
 ```
+
+### debugging
+
+Aside from the current [node debugger](https://nodejs.org/api/debugger.html#debugger_debugger) you 
+may use the experimental v8 inspector which allows you to use chrome dev tools to debug node and
+browser code by doing the following:
+
+* install Chrome Canary ([follow this guide to activate the dev tools feature](https://blog.hospodarets.com/nodejs-debugging-in-chrome-devtools)) 
+* install node v6.6.* or higher
+* run `dev-inspect-server` npm script to start app
+
