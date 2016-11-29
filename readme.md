@@ -1,20 +1,32 @@
-### Quick start
+## Requirements
 
-1. Install npm dependencies:
-  `git submodule init && git submodule update && npm install`
-2. Build:
-  `npm run build` (optionally watch for updates with `npm run watch`)
-3. Run:
-  dev: `npm run dev-server`
-  production `npm run server`
+* NodeJS v4.0+ (production runs on 4.1.2 
+* NPM v3.10+
+* macOS or Linux (not tested on Windows)
 
-### Configuring your dev envirnoment
+## Quick start
 
-Create a file in the root called `start.sh` and make it executable `chmod +x start.sh`.
-This file is automatically ignore by git and you can use it to define environment variables start the server instead
-of `npm run`.
+We use NPM scripts for all development related tasks.
 
-#### Example start.sh
+### git
+
+The main git branch is **2X**
+
+We use rebasing in order to avoid merge commits.
+
+#### Hooks
+
+  We have pre-commit/push hooks in the `hooks` directory to help enforce our linting rules and tests. Developers are highly encouraged to use them.
+
+### Configure your dev envirnoment
+
+We use a shell script to run the app so we can define needed environment variables. By convention we call it `start.sh`. This file is already in our `.gitignore`.
+
+`touch start.sh`  
+
+`chmod +x start.sh`  
+
+#### Example `start.sh`
 
 ```sh
 #!/bin/bash
@@ -32,13 +44,28 @@ STATSD_DEBUG="true" \
 npm run dev-server
 ```
 
-### debugging
+### Install
+
+`npm install`
+
+### Build/watch
+
+*watch* - `npm run watch`  
+*build* - `npm run build`
+
+### running the app
+
+Instead of running the npm script that starts the server make sure to use your `start.sh` with the appropriate keys so you can log in.
+
+`./start.sh`
+
+## Debugging
 
 Aside from the current [node debugger](https://nodejs.org/api/debugger.html#debugger_debugger) you 
 may use the experimental v8 inspector which allows you to use chrome dev tools to debug node and
 browser code by doing the following:
 
 * install Chrome Canary ([follow this guide to activate the dev tools feature](https://blog.hospodarets.com/nodejs-debugging-in-chrome-devtools)) 
-* install node v6.6.* or higher
-* run `dev-inspect-server` npm script to start app
+* install node v6.6.* or higher.
+* add `dev-inspect-server` npm script to your `start.sh` and restart.
 
