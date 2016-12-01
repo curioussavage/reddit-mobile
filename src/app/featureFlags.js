@@ -214,7 +214,7 @@ const config = {
   },
   [VARIANT_MIXED_VIEW]: {
     and: [
-      { compact: true },
+      { compact: false },
       { variant: 'mweb_mixed_view:active'},
     ],
   },

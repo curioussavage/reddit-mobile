@@ -106,7 +106,8 @@ export function Post(props) {
 
   const canExpand = post.preview && post.preview.images.length > 0 || !!post.oembed; 
 
-  const displayCompact = compact && !(inMixedViewExp && canExpand);
+  const displayCompact = compact || (inMixedViewExp && 
+    (!canExpand || ['link', 'self'].indexOf(post.postHint) !== -1));
 
   if (post.isBlankAd) {
     // Return an empty div if it's a blank ad
