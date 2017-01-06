@@ -15,6 +15,7 @@ module.exports = function(isProduction) {
   var release = generateReleaseVersion();
   var clientConfig = configs.getClientConfig(isProduction, {
     sentryProject: 'mobile-web',
+    sentryOrg: 'mobile-web',
     release: release,
   });
   var serverConfig = configs.getServerConfig(isProduction);
