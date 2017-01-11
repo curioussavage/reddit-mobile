@@ -1,4 +1,6 @@
 import React from 'react';
+import Perf from 'react-addons-perf';
+
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import has from 'lodash/has';
@@ -26,6 +28,7 @@ import { paramsToCommentsPageId } from 'app/models/CommentsPage';
 const T = React.PropTypes;
 
 function CommentsPage(props) {
+  Perf.start();
   const {
     pageParams,
     commentsPage,
@@ -94,9 +97,18 @@ function CommentsPage(props) {
         />
         : null
       }
-
+      <span ref={stopPerf} />
     </div>
   );
+}
+
+function stopPerf(el) {
+  Perf.stop();
+  var measurements = Perf.getLastMeasurements();
+  Perf.printInclusive(measurements);
+  console.log('----------------');
+  console.log('wasted: \n');
+  Perf.printWasted(measurements);
 }
 
 CommentsPage.propTypes = {
