@@ -22,8 +22,9 @@ import Session from 'app/models/Session';
 import * as smartBannerActions from 'app/actions/smartBanner';
 
 Raven
-  .config(process.env.SENTRY_ERROR_ENDPOINT, {
+  .config(process.env.SENTRY_CLIENT_PUBLIC_URL, {
     release: __GLOBALS__.release,
+    environment: process.env.NODE_ENV,
   })
   .install();
 
@@ -76,8 +77,6 @@ window.onerror = (message, url, line, column, error) => {
     line,
     column,
   }, ERROR_ENDPOINTS, ERROR_LOG_OPTIONS);
-
-  Raven.captureException(error);
 };
 
 // This isn't supported in most mobile browsers right now but it is in chrome.
@@ -88,6 +87,8 @@ window.onunhandledrejection = rejection => {
     ...getUserAgentAndURL(),
     rejection,
   }, ERROR_ENDPOINTS, ERROR_LOG_OPTIONS);
+
+  Raven.captureException(rejection.reason);
 };
 
 // start the app now
