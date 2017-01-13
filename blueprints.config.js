@@ -1,5 +1,6 @@
 var child_process = require('child_process');
 var configs = require('@r/build/lib/configs');
+var webpack = require('webpack');
 
 function generateReleaseVersion() {
   try {
@@ -31,6 +32,11 @@ module.exports = function(isProduction) {
         ['assets/img', 'build/img'],
       ],
     },
+    new webpack.DefinePlugin({
+      '__GLOBALS__': {
+        release: JSON.stringify(release),
+      },
+    }),
   ]);
 
   clientConfig.webpack.plugins = clientConfig.webpack.plugins.concat([

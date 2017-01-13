@@ -16,6 +16,7 @@ import routes from 'app/router';
 import main from 'server/templates/main';
 import reducers from 'app/reducers';
 import reduxMiddleware from 'app/reduxMiddleware';
+import ravenMiddleware from 'app/reduxMiddleware/raven';
 import loginproxy from 'server/session/loginproxy';
 import logoutproxy from 'server/session/logoutproxy';
 import registerproxy from 'server/session/registerproxy';
@@ -90,6 +91,7 @@ const ConfigedAPIOptions = {
   actionNameSecret: process.env.ACTION_NAME_SECRET,
 };
 
+reduxMiddleware.unshift(ravenMiddleware(Raven));
 export function startServer() {
   console.log(`Started server at PID ${process.pid}`);
   // Create and launch the server

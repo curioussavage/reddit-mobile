@@ -17,6 +17,7 @@ import { initGoogleTagManager } from 'lib/gtm';
 import routes from 'app/router';
 import reducers from 'app/reducers';
 import reduxMiddleware from 'app/reduxMiddleware';
+import ravenMiddleware from 'app/reduxMiddleware/raven';
 import { sendTimings, onHandlerCompleteTimings } from 'lib/timing';
 import Session from 'app/models/Session';
 import * as smartBannerActions from 'app/actions/smartBanner';
@@ -91,6 +92,7 @@ window.onunhandledrejection = rejection => {
   Raven.captureException(rejection.reason);
 };
 
+reduxMiddleware.unshift(ravenMiddleware(Raven));
 // start the app now
 const client = Client({
   routes,

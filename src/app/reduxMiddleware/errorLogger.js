@@ -5,8 +5,6 @@ import errorLog from 'lib/errorLog';
 import logSafeJSONStringify from 'lib/logSafeJSONStringify';
 import RingStack from 'lib/RingStack';
 
-import Raven from 'raven-js';
-
 import * as accountActions from 'app/actions/accounts';
 import * as activityActions from 'app/actions/activities';
 import * as adActions from 'app/actions/ads';
@@ -43,23 +41,7 @@ export default function errorLogger() {
   ]);
 
   return store => next => action => {
-    actionStack.push(action);  
-    if (typeof action === 'object') {
-      Raven.captureBreadcrumb({
-        message: action.type,
-        category: 'redux-action',
-      });
-    }
- 
-    // Add some redux context to Raven
-    const state = store.getState();
-
-    // use logSafeJSONStringify to ensure we remove user sensitive fields
-    // unfortunately we need to re-convert to JSON afterwards
-    Raven.setUserContext(JSON.parse(logSafeJSONStringify({
-      pageInfo: state.platform,
-      user: state.user,
-    })));
+    actionStack.push(action);
 
     // Check for specific error actions, this gives insight into what kind of
     // error happened. I.E. its easier to differentiate between a specific
@@ -101,7 +83,6 @@ export default function errorLogger() {
               // we can't de-dupe, so there's a chance it's a duplicate
             }
             logErrorWithConfig(error, store.getState(), actionStack, possibleDuplicate);
-            Raven.captureException(error);
           }
         });
       }
