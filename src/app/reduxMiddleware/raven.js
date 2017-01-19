@@ -10,7 +10,7 @@
 import logSafeJSONStringify from 'lib/logSafeJSONStringify';
 
 export default raven => store => next => action => {
-  if (process.env.ENV === 'CLIENT') {
+  if (process.env.ENV === 'client') {
     if (typeof action === 'object') {
       raven.captureBreadcrumb({
         message: action.type,
