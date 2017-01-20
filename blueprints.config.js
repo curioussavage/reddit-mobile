@@ -14,12 +14,13 @@ function generateReleaseVersion() {
 
 module.exports = function(isProduction) {
   var release = generateReleaseVersion();
-  var clientConfig = configs.getClientConfig(isProduction, {
+  var options = {
     sentryProject: 'mobile-web',
     sentryOrg: 'sentry',
     release: release,
-  });
-  var serverConfig = configs.getServerConfig(isProduction);
+  };
+  var clientConfig = configs.getClientConfig(isProduction, options);
+  var serverConfig = configs.getServerConfig(isProduction, options);
 
   // Copy static files for deploying / serving. We also use these in debug
   // to more closely mimic production.
