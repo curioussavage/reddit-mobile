@@ -33,11 +33,6 @@ module.exports = function(isProduction) {
         ['assets/img', 'build/img'],
       ],
     },
-    new webpack.DefinePlugin({
-      '__GLOBALS__': {
-        release: JSON.stringify(release),
-      },
-    }),
   ]);
 
   clientConfig.webpack.plugins = clientConfig.webpack.plugins.concat([
@@ -55,9 +50,6 @@ module.exports = function(isProduction) {
         TRACKER_KEY: JSON.stringify(process.env.TRACKER_KEY),
         TRACKER_SECRET: JSON.stringify(process.env.TRACKER_SECRET),
         SENTRY_ERROR_ENDPOINT: JSON.stringify(process.env.SENTRY_ERROR_ENDPOINT),
-      },
-      '__GLOBALS__': {
-        release: JSON.stringify(release),
       },
     },
   ]);
