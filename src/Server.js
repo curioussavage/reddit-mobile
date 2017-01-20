@@ -91,7 +91,6 @@ const ConfigedAPIOptions = {
   actionNameSecret: process.env.ACTION_NAME_SECRET,
 };
 
-reduxMiddleware.unshift(ravenMiddleware(Raven));
 export function startServer() {
   console.log(`Started server at PID ${process.pid}`);
   // Create and launch the server
@@ -100,7 +99,7 @@ export function startServer() {
     routes,
     template: main,
     reducers,
-    reduxMiddleware,
+    reduxMiddleware: [ravenMiddleware(Raven)].concat(reduxMiddleware),
     dispatchBeforeNavigation: async (ctx, dispatch, getState) => {
       dispatchInitialShell(ctx, dispatch);
       dispatchAPIPassThroughHeaders(ctx, dispatch);

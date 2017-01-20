@@ -89,15 +89,15 @@ window.onunhandledrejection = rejection => {
     rejection,
   }, ERROR_ENDPOINTS, ERROR_LOG_OPTIONS);
 
+  // raven does not automatically listen to this, unlike window.onerror
   Raven.captureException(rejection.reason);
 };
 
-reduxMiddleware.unshift(ravenMiddleware(Raven));
 // start the app now
 const client = Client({
   routes,
   reducers,
-  reduxMiddleware,
+  reduxMiddleware: [ravenMiddleware(Raven)].concat(reduxMiddleware),
   modifyData: data => {
     // TODO if we start not using shell rendering in a serious way,
     // we'll need to unserialize all of the api models. This should
