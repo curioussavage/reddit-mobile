@@ -137,7 +137,7 @@ function renderAuthorAndTimeStamp(post, single, hideWhen) {
         { SEPERATOR }
         { short(createdUTC) }
       </span>
-   );
+    );
   }
 
   return (
@@ -146,7 +146,7 @@ function renderAuthorAndTimeStamp(post, single, hideWhen) {
       { SEPERATOR }
       { authorLink }
     </span>
- );
+  );
 }
 
 function renderPostFlair(post, single) {
