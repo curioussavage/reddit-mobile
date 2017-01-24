@@ -57,8 +57,13 @@ const appleAppSiteAssociation = JSON.stringify({
 });
 
 const EXCLUDED_ROUTES = [
-  '*', '/robots.txt', '/live/:idOrFilter?',
-  '/goto', '/faq', '/health', '/routes',
+  '*',
+  '/robots.txt',
+  '/live/:idOrFilter?',
+  '/goto',
+  '/faq',
+  '/health',
+  '/routes',
   '/apple-app-site-association',
 ];
 

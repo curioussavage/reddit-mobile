@@ -78,6 +78,8 @@ window.onerror = (message, url, line, column, error) => {
     line,
     column,
   }, ERROR_ENDPOINTS, ERROR_LOG_OPTIONS);
+
+  Raven.captureException(error);
 };
 
 // This isn't supported in most mobile browsers right now but it is in chrome.

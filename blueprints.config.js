@@ -6,7 +6,8 @@ function generateReleaseVersion() {
   try {
     return child_process
       .execSync('git rev-parse --short HEAD')
-      .toString().trim();
+      .toString()
+      .trim();
   } catch (e) {
     return Math.random().toString(36).slice(2);
   }
