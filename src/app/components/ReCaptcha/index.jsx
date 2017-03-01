@@ -2,6 +2,8 @@ import React from 'react';
 import './styles.less';
 
 const T = React.PropTypes;
+const gRecaptchaUrl =
+  'https://www.google.com/recaptcha/api.js?onload=grecaptchaOnLoad&render=explicit';
 
 // A promise to serve as a barrier to ensure that we've loaded google's bits
 const grecaptchaLoaded = new Promise(resolve => {
@@ -33,6 +35,10 @@ class ReCaptcha extends React.Component {
   };
 
   async componentDidMount() {
+    // _isMounted workaround is for when the promise in this func
+    // completes after it is unmounted.
+    this._isMounted = true;
+
     const {
       elementId,
       sitekey,
@@ -48,22 +54,28 @@ class ReCaptcha extends React.Component {
       // If it's not loaded yet, let's do that...
       // Add the script to the DOM, causing it to load...
       const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=grecaptchaOnLoad&render=explicit';
+      script.src = gRecaptchaUrl;
       document.body.appendChild(script);
 
       // ... wait for the promise to get resolved
       await grecaptchaLoaded;
     }
 
-    window.grecaptcha.render(elementId, {
-      sitekey,
-      theme,
-      type,
-      size,
-      tabindex,
-      callback: onSuccess,
-      'expired-callback': onExpiration,
-    });
+    if (this._isMounted) {
+      window.grecaptcha.render(elementId, {
+        sitekey,
+        theme,
+        type,
+        size,
+        tabindex,
+        callback: onSuccess,
+        'expired-callback': onExpiration,
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   shouldComponentUpdate() {
