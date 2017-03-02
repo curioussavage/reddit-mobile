@@ -69,9 +69,8 @@ export const fetchCommentsPage = commentsPageParams => async (dispatch, getState
     const apiResponse = await CommentsEndpoint.get(apiOptions, commentsPageParams);
     dispatch(received(commentsPageId, apiResponse));
   } catch (e) {
-    if (e instanceof ResponseError) {
-      dispatch(failed(commentsPageId, e));
-    } else {
+    dispatch(failed(commentsPageId, e));
+    if (!(e instanceof ResponseError)) {
       throw e;
     }
   }

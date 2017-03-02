@@ -1,3 +1,5 @@
+import has from 'lodash/has';
+
 import makeRequest from './makeRequest';
 import config from 'config';
 import ResponseError from 'apiClient/errors/ResponseError';
@@ -10,12 +12,13 @@ const ENV = (process.env.ENV || 'server').toUpperCase();
 const isAPIFailure = details => details.error instanceof ResponseError;
 
 
-export default function errorLog(details={}, errorEndpoints={}, options={ SHOULD_RETHROW: true}) {
+export default function errorLog(details={}, errorEndpoints={}, options={ SHOULD_RETHROW: false }) {
   // parse the stack for location details if we're passed
   // an Error or PromiseRejectionEvent
   const { error, rejection } = details;
   const failure = error || rejection;
-  if (!failure || failure._SEEN_BY_ERROR_LOG) {
+  if (!failure || failure._SEEN_BY_ERROR_LOG ||
+    has(rejection, 'reason.SEEN_BY_REDUX_ERROR_LOGGER')) {
     // we've already seen this error and rethrew it so chrome will do it's default logging
     return;
   }
